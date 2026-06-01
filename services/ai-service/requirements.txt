@@ -1,0 +1,12 @@
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+pydantic==2.10.0
+python-multipart==0.0.12
+redis==5.2.0
+httpx==0.28.0
+boto3==1.36.0
+torch==2.5.0
+torchvision==0.20.0
+whisper-openai==20240930
+opencv-python==4.10.0
+numpy==2.1.0
