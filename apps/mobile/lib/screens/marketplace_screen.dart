@@ -392,7 +392,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> with SingleTicker
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: related.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 10),
+                      separatorBuilder: (_, _) => const SizedBox(width: 10),
                       itemBuilder: (_, i) {
                         final r = related[i];
                         return GestureDetector(
@@ -464,7 +464,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> with SingleTicker
                   child: ListView.separated(
                     padding: const EdgeInsets.all(16),
                     itemCount: cartItems.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
                     itemBuilder: (_, i) {
                       final ci = cartItems[i];
                       return Container(

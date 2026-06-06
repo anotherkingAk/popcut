@@ -1,10 +1,12 @@
 'use client'
 
+import React from 'react'
 import { Play, Pause, Maximize2, Volume2 } from 'lucide-react'
-import { useEditor } from '@/hooks/useEditor'
+import { useIsPlaying, useEditorActions } from '@/hooks/useEditor'
 
-export function Preview() {
-  const { isPlaying, togglePlay } = useEditor()
+export const Preview = React.memo(function Preview() {
+  const isPlaying = useIsPlaying()
+  const { togglePlay } = useEditorActions()
 
   return (
     <div className="flex-1 bg-black flex items-center justify-center relative min-h-[300px]">
@@ -45,4 +47,4 @@ export function Preview() {
       </div>
     </div>
   )
-}
+})

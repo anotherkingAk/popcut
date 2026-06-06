@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../services/haptic_service.dart';
 
@@ -18,7 +17,7 @@ class AiStudioScreen extends StatefulWidget {
 }
 
 class _AiStudioScreenState extends State<AiStudioScreen> {
-  int _creditsRemaining = 15;
+  final int _creditsRemaining = 15;
 
   @override
   Widget build(BuildContext context) {

@@ -161,7 +161,6 @@ class _WaveformPainter extends CustomPainter {
 
     final path = Path();
     for (double x = 0; x < size.width; x += 2) {
-      final amplitude = (x / size.width) * 20;
       final y = size.height / 2 + (size.height / 4) * (x < size.width * 0.3
           ? (x / (size.width * 0.3))
           : x < size.width * 0.7

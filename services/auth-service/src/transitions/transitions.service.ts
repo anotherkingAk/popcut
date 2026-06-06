@@ -25,12 +25,10 @@ export class TransitionsService {
   }
 
   async update(id: string, data: any) {
-    await this.get(id)
     return this.prisma.transition.update({ where: { id }, data })
   }
 
   async remove(id: string) {
-    await this.get(id)
     await this.prisma.transition.delete({ where: { id } })
     return { message: 'Transition deleted' }
   }

@@ -30,8 +30,6 @@ export default function PlansPage() {
   const [form, setForm] = useState({ name: '', description: '', price: 0, interval: 'month', credits: 0, isActive: true })
 
   const load = async () => {
-    const token = localStorage.getItem('admin_token')
-    if (token) api.setToken(token)
     try { const data = await apiGet<{ data: Plan[] }>('/admin/settings/pricing'); setPlans(data.data) }
     catch (e) { console.error(e) }
     finally { setLoading(false) }

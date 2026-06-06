@@ -52,7 +52,7 @@ class DelayInterval {
 
 class SpringCurve extends Curve {
   final SpringDescription spring;
-  SpringCurve({SpringDescription? spring}) : spring = spring ?? AppMotion.springSnappy;
+  const SpringCurve({SpringDescription? spring}) : spring = spring ?? AppMotion.springSnappy;
 
   @override
   double transformInternal(double t) {

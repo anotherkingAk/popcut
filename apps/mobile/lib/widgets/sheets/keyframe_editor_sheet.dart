@@ -7,7 +7,6 @@ import '../../widgets/common/app_bottom_sheet.dart';
 class KeyframeEditorSheet extends StatelessWidget {
   const KeyframeEditorSheet({super.key});
 
-  static const _properties = ['Position', 'Scale', 'Rotation', 'Opacity'];
 
   static void show(BuildContext context) {
     AppBottomSheet.show(

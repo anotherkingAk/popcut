@@ -31,18 +31,15 @@ export class NotificationsService {
   }
 
   async update(id: string, data: any) {
-    await this.get(id)
     return this.prisma.notification.update({ where: { id }, data })
   }
 
   async remove(id: string) {
-    await this.get(id)
     await this.prisma.notification.delete({ where: { id } })
     return { message: 'Notification deleted' }
   }
 
   async markRead(id: string) {
-    await this.get(id)
     return this.prisma.notification.update({ where: { id }, data: { read: true } })
   }
 
@@ -50,6 +47,7 @@ export class NotificationsService {
     let cursor: string | undefined
     const batchSize = 1000
     let total = 0
+    const notifications: Array<{ userId: string; type: any; title: string; body: string; data?: any }> = []
     while (true) {
       const users = await this.prisma.user.findMany({
         take: batchSize,
@@ -58,17 +56,18 @@ export class NotificationsService {
         orderBy: { id: 'asc' },
       })
       if (users.length === 0) break
-      await this.prisma.notification.createMany({
-        data: users.map(u => ({
-          userId: u.id,
-          type: data.type as any,
-          title: data.title,
-          body: data.body,
-          data: data.data,
-        })),
-      })
+      notifications.push(...users.map(u => ({
+        userId: u.id,
+        type: data.type as any,
+        title: data.title,
+        body: data.body,
+        data: data.data,
+      })))
       total += users.length
       cursor = users[users.length - 1].id
+    }
+    if (notifications.length > 0) {
+      await this.prisma.notification.createMany({ data: notifications })
     }
     return { message: `Broadcast sent to ${total} users` }
   }

@@ -38,12 +38,12 @@ class PopCutBottomSheet extends StatelessWidget {
       useSafeArea: true,
       barrierColor: Colors.black.withValues(alpha: 0.6),
       builder: (_) => PopCutBottomSheet(
-        child: child,
         title: title,
         trailing: trailing,
         initialChildSize: initialChildSize,
         minChildSize: minChildSize,
         maxChildSize: maxChildSize,
+        child: child,
       ),
     );
   }

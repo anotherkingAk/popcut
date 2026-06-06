@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
-import '../../../theme/app_motion.dart';
 import '../../../services/haptic_service.dart';
 
 class AiColorMatch extends StatelessWidget {
@@ -148,7 +147,7 @@ class AiColorMatch extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.movie, size: 20, color: AppColors.textDisabled),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Text('Target', style: TextStyle(fontSize: 9, color: AppColors.textLow)),
                     SizedBox(height: 2),
                     Text('72%', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.brand500)),

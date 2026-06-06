@@ -535,7 +535,7 @@ class _HomeScreenRedesignState extends State<HomeScreenRedesign> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: 3,
-              itemBuilder: (_, __) => Container(
+              itemBuilder: (_, _) => Container(
                 width: 180,
                 margin: const EdgeInsets.only(right: 12),
                 child: const PopCutSkeletonCard(height: 140),
@@ -552,7 +552,7 @@ class _HomeScreenRedesignState extends State<HomeScreenRedesign> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: 3,
-              itemBuilder: (_, __) => Container(
+              itemBuilder: (_, _) => Container(
                 width: 200,
                 margin: const EdgeInsets.only(right: 12),
                 child: const PopCutSkeletonCard(height: 160),

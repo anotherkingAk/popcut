@@ -44,19 +44,19 @@ class _CapCardAppState extends State<CapCardApp> {
         ChangeNotifierProvider(create: (_) => EditorProvider()),
         ChangeNotifierProxyProvider<EditorProvider, PlaybackNotifier>(
           create: (ctx) => ctx.read<EditorProvider>().playback,
-          update: (_, editor, __) => editor.playback,
+          update: (_, editor, _) => editor.playback,
         ),
         ChangeNotifierProxyProvider<EditorProvider, SelectionNotifier>(
           create: (ctx) => ctx.read<EditorProvider>().selection,
-          update: (_, editor, __) => editor.selection,
+          update: (_, editor, _) => editor.selection,
         ),
         ChangeNotifierProxyProvider<EditorProvider, TimelineNotifier>(
           create: (ctx) => ctx.read<EditorProvider>().timeline,
-          update: (_, editor, __) => editor.timeline,
+          update: (_, editor, _) => editor.timeline,
         ),
         ChangeNotifierProxyProvider<EditorProvider, ToolNotifier>(
           create: (ctx) => ctx.read<EditorProvider>().tool,
-          update: (_, editor, __) => editor.tool,
+          update: (_, editor, _) => editor.tool,
         ),
       ],
       child: const AppRouter(),

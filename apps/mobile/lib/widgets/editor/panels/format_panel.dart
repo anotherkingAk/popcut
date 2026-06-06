@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
-import '../../../theme/app_motion.dart';
 import '../../../services/haptic_service.dart';
 
 class FormatPanel extends StatelessWidget {
@@ -117,7 +116,7 @@ class FormatPanel extends StatelessWidget {
   Widget _buildFormatLabel() {
     return Row(
       children: [
-        const Text('Format Label', style: const TextStyle(fontSize: 12, color: AppColors.textMedium)),
+        const Text('Format Label', style: TextStyle(fontSize: 12, color: AppColors.textMedium)),
         const Spacer(),
         Container(
           width: 120,

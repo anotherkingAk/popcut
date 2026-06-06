@@ -121,7 +121,7 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
           children: [
             Selector<SelectionNotifier, SelectionState>(
               selector: (_, s) => s.selectionState,
-              builder: (_, selectionState, __) {
+              builder: (_, selectionState, _) {
                 final clipName = _selectedClipName(context.read<SelectionNotifier>());
                 return ContextualToolbar(
                   selectionState: selectionState,
@@ -143,7 +143,7 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
                           flex: 4,
                           child: Selector<PlaybackNotifier, bool>(
                             selector: (_, p) => p.isPlaying,
-                            builder: (_, isPlaying, __) {
+                            builder: (_, isPlaying, _) {
                               final selectionState = context.select<SelectionNotifier, SelectionState>((s) => s.selectionState);
                               return _buildPreviewArea(isPlaying, selectionState, engine);
                             },
@@ -151,7 +151,7 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
                         ),
                         Selector<PlaybackNotifier, double>(
                           selector: (_, p) => p.currentTime,
-                          builder: (_, currentTime, __) => SeekBar(
+                          builder: (_, currentTime, _) => SeekBar(
                             currentPosition: currentTime,
                             totalDuration: engine.totalDuration,
                             onSeek: (v) => engine.seek(v),
@@ -163,7 +163,7 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
                               ? _buildPanelLayout(engine)
                               : Selector<TimelineNotifier, List<TrackModel>>(
                                   selector: (_, t) => t.tracks,
-                                  builder: (_, tracks, __) {
+                                  builder: (_, tracks, _) {
                                     final playback = context.read<PlaybackNotifier>();
                                     final selection = context.read<SelectionNotifier>();
                                     return TimelineZone(
@@ -192,14 +192,14 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
                         if (!hasPanelOpen)
                           Selector<ToolNotifier, ToolType?>(
                             selector: (_, t) => t.activeTool,
-                            builder: (_, activeTool, __) => ToolDock(activeTool: activeTool, onToolTap: _openTool),
+                            builder: (_, activeTool, _) => ToolDock(activeTool: activeTool, onToolTap: _openTool),
                           ),
                       ],
                     ),
                   ),
                   Selector<SelectionNotifier, String?>(
                     selector: (_, s) => s.selectedClipId,
-                    builder: (_, selectedClipId, __) {
+                    builder: (_, selectedClipId, _) {
                       if (selectedClipId == null) return const SizedBox.shrink();
                       final selection = context.read<SelectionNotifier>();
                       final trackType = _findTrackType(selection.selectedTrackId, engine);
@@ -216,7 +216,7 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
             if (hasPanelOpen)
               Selector<ToolNotifier, ToolType?>(
                 selector: (_, t) => t.activeTool,
-                builder: (_, activeTool, __) => ToolDock(activeTool: activeTool, onToolTap: _openTool),
+                builder: (_, activeTool, _) => ToolDock(activeTool: activeTool, onToolTap: _openTool),
               ),
           ],
         ),
@@ -274,7 +274,7 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
           height: 48,
           child: Selector<ToolNotifier, ToolType?>(
             selector: (_, t) => t.activeTool,
-            builder: (_, activeTool, __) => ToolDock(activeTool: activeTool, onToolTap: _openTool),
+            builder: (_, activeTool, _) => ToolDock(activeTool: activeTool, onToolTap: _openTool),
           ),
         ),
       ],

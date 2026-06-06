@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
-import '../../theme/app_motion.dart';
 import '../../services/haptic_service.dart';
 import '../../widgets/common/app_bottom_sheet.dart';
 
 class SubscriptionPlansSheet extends StatelessWidget {
   const SubscriptionPlansSheet({super.key});
 
-  static const _tiers = ['Monthly', 'Yearly', 'Lifetime'];
 
   static void show(BuildContext context) {
     AppBottomSheet.show(

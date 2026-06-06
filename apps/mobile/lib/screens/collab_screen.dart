@@ -31,14 +31,6 @@ class _CollabScreenState extends State<CollabScreen> with SingleTickerProviderSt
     ),
   );
 
-  final _sampleActivity = [
-    CollabActivity('User A', 'trimmed clip "Intro"', '2h ago'),
-    CollabActivity('User B', 'added transition to clip 3', '3h ago'),
-    CollabActivity('User C', 'adjusted audio levels', '5h ago'),
-    CollabActivity('User A', 'added text overlay', '1d ago'),
-    CollabActivity('User B', 'exported draft v2', '2d ago'),
-  ];
-
   final _sampleVersions = [
     VersionEntry('v1.2', 'User B', 'Adjusted color grade', DateTime.now().subtract(const Duration(hours: 2)), true),
     VersionEntry('v1.1', 'User A', 'Trimmed intro clip', DateTime.now().subtract(const Duration(hours: 5)), true),
@@ -82,7 +74,7 @@ class _CollabScreenState extends State<CollabScreen> with SingleTickerProviderSt
       body: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: _sampleProjects.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        separatorBuilder: (_, _) => const SizedBox(height: 12),
         itemBuilder: (_, i) {
           final p = _sampleProjects[i];
           return GestureDetector(
@@ -206,7 +198,7 @@ class _CollabScreenState extends State<CollabScreen> with SingleTickerProviderSt
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: suggested.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              separatorBuilder: (_, _) => const SizedBox(height: 8),
               itemBuilder: (_, i) {
                 return Container(
                   padding: const EdgeInsets.all(12),
@@ -326,7 +318,7 @@ class _CollabScreenState extends State<CollabScreen> with SingleTickerProviderSt
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: _sampleComments.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (_, i) {
         final c = _sampleComments[i];
         return Container(
@@ -392,7 +384,7 @@ class _CollabScreenState extends State<CollabScreen> with SingleTickerProviderSt
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: _sampleVersions.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (_, i) {
         final v = _sampleVersions[i];
         return Container(

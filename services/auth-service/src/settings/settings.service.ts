@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { PrismaClient } from '@prisma/client'
 
 @Injectable()
@@ -34,14 +34,10 @@ export class SettingsService {
   }
 
   async updatePlan(id: string, data: any) {
-    const plan = await this.prisma.subscriptionPlan.findUnique({ where: { id } })
-    if (!plan) throw new NotFoundException('Plan not found')
     return this.prisma.subscriptionPlan.update({ where: { id }, data })
   }
 
   async deletePlan(id: string) {
-    const plan = await this.prisma.subscriptionPlan.findUnique({ where: { id } })
-    if (!plan) throw new NotFoundException('Plan not found')
     await this.prisma.subscriptionPlan.delete({ where: { id } })
     return { message: 'Plan deleted' }
   }

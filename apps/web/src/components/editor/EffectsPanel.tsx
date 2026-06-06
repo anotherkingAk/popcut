@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { Sliders, Palette, Sparkles, Layers } from 'lucide-react'
 
 const tabs = [
@@ -9,7 +10,7 @@ const tabs = [
   { id: 'layers', label: 'Layers', icon: Layers },
 ]
 
-export function EffectsPanel() {
+export const EffectsPanel = React.memo(function EffectsPanel() {
   return (
     <div className="w-60 bg-surface border-l border-border flex flex-col shrink-0">
       <div className="flex border-b border-border">
@@ -63,4 +64,4 @@ export function EffectsPanel() {
       </div>
     </div>
   )
-}
+})

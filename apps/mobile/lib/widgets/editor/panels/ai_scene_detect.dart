@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
-import '../../../theme/app_motion.dart';
 import '../../../services/haptic_service.dart';
 
 class AiSceneDetect extends StatelessWidget {
@@ -63,7 +62,7 @@ class AiSceneDetect extends StatelessWidget {
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.filmstrip, size: 16, color: AppColors.brand500),
+            Icon(Icons.movie, size: 16, color: AppColors.brand500),
             SizedBox(width: 8),
             Text('Scan for Scene Changes', style: TextStyle(fontSize: 12, color: AppColors.brand500, fontWeight: FontWeight.w600)),
           ],
@@ -307,16 +306,6 @@ class AiSceneDetect extends StatelessWidget {
           ),
           child: Slider(value: value, min: min, max: max, onChanged: (_) => HapticService.trigger(HapticLevel.light)),
         ),
-      ],
-    );
-  }
-
-  Widget _buildToggleRow(String label, bool value) {
-    return Row(
-      children: [
-        Text(label, style: AppTypography.bodySm),
-        const Spacer(),
-        Switch(value: value, onChanged: (_) => HapticService.trigger(HapticLevel.light)),
       ],
     );
   }

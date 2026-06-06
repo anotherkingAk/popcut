@@ -25,12 +25,10 @@ export class CouponsService {
   }
 
   async update(id: string, data: any) {
-    await this.get(id)
     return this.prisma.coupon.update({ where: { id }, data })
   }
 
   async remove(id: string) {
-    await this.get(id)
     await this.prisma.coupon.delete({ where: { id } })
     return { message: 'Coupon deleted' }
   }

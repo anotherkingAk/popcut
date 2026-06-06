@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
-import '../../../theme/app_motion.dart';
 import '../../../services/haptic_service.dart';
 
 class BeatSyncPanel extends StatelessWidget {

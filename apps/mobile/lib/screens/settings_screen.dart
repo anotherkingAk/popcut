@@ -21,7 +21,7 @@ class SettingsScreen extends StatelessWidget {
       ),
       body: Selector<AppProvider, AppUser?>(
         selector: (_, a) => a.user,
-        builder: (_, user, __) {
+        builder: (_, user, _) {
           final tier = user?.tier.name ?? 'Free';
           return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16),

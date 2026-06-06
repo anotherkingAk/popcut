@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../services/haptic_service.dart';
 
@@ -23,7 +22,7 @@ class TemplateDetailScreen extends StatefulWidget {
 
 class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
   bool _isFavorited = false;
-  double _rating = 4.5;
+  final double _rating = 4.5;
 
   @override
   Widget build(BuildContext context) {
@@ -292,7 +291,7 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: 6,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
             itemBuilder: (_, i) {
               final colors = [
                 AppColors.trackVideo, AppColors.trackOverlay,
@@ -354,7 +353,7 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: recs.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (_, i) {
               return GestureDetector(
                 onTap: () {

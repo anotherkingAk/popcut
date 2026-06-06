@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 import '../services/haptic_service.dart';
 
@@ -305,7 +304,7 @@ class _ReelMakerScreenState extends State<ReelMakerScreen> {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: _clips.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (_, i) {
                 final clip = _clips[i];
                 return Container(

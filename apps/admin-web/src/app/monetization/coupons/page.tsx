@@ -73,7 +73,7 @@ export default function CouponsPage() {
               <option value="percentage">Percentage</option><option value="fixed">Fixed Amount</option>
             </select>
             <input type="number" placeholder="Discount Value" value={form.discountValue} onChange={e => setForm({...form, discountValue: parseInt(e.target.value) || 0})} className="h-9 rounded-lg bg-background border border-border px-3 text-sm text-text outline-none focus:border-primary" required />
-            <input type="number" placeholder="Max Uses" value={form.maxUses || ''} onChange={e => setForm({...form, maxUses: parseInt(e.target.value) || undefined})} className="h-9 rounded-lg bg-background border border-border px-3 text-sm text-text outline-none focus:border-primary" />
+            <input type="number" placeholder="Max Uses" value={form.maxUses || ''} onChange={e => setForm({...form, maxUses: parseInt(e.target.value) || 0})} className="h-9 rounded-lg bg-background border border-border px-3 text-sm text-text outline-none focus:border-primary" />
             <input type="number" placeholder="Min Amount (cents)" value={form.minAmount || ''} onChange={e => setForm({...form, minAmount: parseInt(e.target.value) || 0})} className="h-9 rounded-lg bg-background border border-border px-3 text-sm text-text outline-none focus:border-primary" />
           </div>
           <button type="submit" className="px-3 py-1.5 rounded-lg bg-primary text-white text-sm">Create</button>

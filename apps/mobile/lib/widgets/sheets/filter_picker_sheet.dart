@@ -10,18 +10,18 @@ class FilterPickerSheet extends StatelessWidget {
   static const _categories = ['Vintage', 'Mood', 'Cinematic', 'B&W', 'Film', 'Artistic'];
 
   static const _filters = [
-    ('Nostalgia', const Color(0xFFD4A574)),
-    ('Retro', const Color(0xFFE8B88A)),
-    ('Sepia', const Color(0xFF704214)),
-    ('Golden', const Color(0xFFD4AF37)),
-    ('Melancholy', const Color(0xFF6B7B8D)),
-    ('Dark Romance', const Color(0xFF4A2040)),
-    ('Blockbuster', const Color(0xFF2D5A27)),
-    ('Noir', const Color(0xFF1A1A2E)),
-    ('Teal & Orange', const Color(0xFFE87A5D)),
-    ('Fade', const Color(0xFFD4C5B5)),
-    ('Kodak', const Color(0xFFC41E3A)),
-    ('Fuji', const Color(0xFF00A1C9)),
+    ('Nostalgia', Color(0xFFD4A574)),
+    ('Retro', Color(0xFFE8B88A)),
+    ('Sepia', Color(0xFF704214)),
+    ('Golden', Color(0xFFD4AF37)),
+    ('Melancholy', Color(0xFF6B7B8D)),
+    ('Dark Romance', Color(0xFF4A2040)),
+    ('Blockbuster', Color(0xFF2D5A27)),
+    ('Noir', Color(0xFF1A1A2E)),
+    ('Teal & Orange', Color(0xFFE87A5D)),
+    ('Fade', Color(0xFFD4C5B5)),
+    ('Kodak', Color(0xFFC41E3A)),
+    ('Fuji', Color(0xFF00A1C9)),
   ];
 
   static void show(BuildContext context) {

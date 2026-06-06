@@ -36,7 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Selector<AppProvider, String?>(
               selector: (_, a) => a.user?.displayName,
-              builder: (_, displayName, __) => _buildAppBar(displayName),
+              builder: (_, displayName, _) => _buildAppBar(displayName),
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -47,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 8),
                     Selector<AppProvider, String?>(
                       selector: (_, a) => a.user?.displayName,
-                      builder: (_, displayName, __) => Column(
+                      builder: (_, displayName, _) => Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('${_greeting()}, ${displayName ?? 'Creator'}',
@@ -177,7 +177,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: projects.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        separatorBuilder: (_, _) => const SizedBox(width: 12),
         itemBuilder: (_, i) {
           final p = projects[i];
           return GestureDetector(
@@ -221,7 +221,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: templates.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        separatorBuilder: (_, _) => const SizedBox(width: 12),
         itemBuilder: (_, i) {
           final colors = [AppColors.primary, AppColors.trackAudio, AppColors.trackText, AppColors.textMedium, AppColors.textLow, AppColors.trackEffect];
           return Container(

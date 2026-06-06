@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../theme/app_theme.dart';
 import '../../services/haptic_service.dart';
 
@@ -142,7 +141,7 @@ class _AdminAnalyticsScreenState extends State<AdminAnalyticsScreen> {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: metrics.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemBuilder: (_, i) {
           final m = metrics[i];
           final color = m['color'] as Color;

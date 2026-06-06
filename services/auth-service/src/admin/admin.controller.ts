@@ -19,6 +19,7 @@ export class AdminController {
   }
 
   // --- Users ---
+  @CacheTTL(60)
   @Get('users')
   listUsers(@Query('page') page?: number, @Query('limit') limit?: number) {
     return this.admin.listUsers(page || 1, limit || 20)
@@ -40,6 +41,7 @@ export class AdminController {
   }
 
   // --- Projects ---
+  @CacheTTL(60)
   @Get('projects')
   listProjects(@Query('page') page?: number, @Query('limit') limit?: number) {
     return this.admin.listProjects(page || 1, limit || 20)
@@ -161,6 +163,7 @@ export class AdminController {
   }
 
   // --- Subscriptions ---
+  @CacheTTL(60)
   @Get('subscriptions')
   listSubscriptions(@Query('page') page?: number, @Query('limit') limit?: number) {
     return this.admin.listSubscriptions(page || 1, limit || 20)
@@ -172,6 +175,7 @@ export class AdminController {
   }
 
   // --- AI Jobs ---
+  @CacheTTL(60)
   @Get('ai-jobs')
   listAIJobs(@Query('page') page?: number, @Query('limit') limit?: number) {
     return this.admin.listAIJobs(page || 1, limit || 20)
@@ -183,18 +187,21 @@ export class AdminController {
   }
 
   // --- Export Jobs ---
+  @CacheTTL(60)
   @Get('export-jobs')
   listExportJobs(@Query('page') page?: number, @Query('limit') limit?: number) {
     return this.admin.listExportJobs(page || 1, limit || 20)
   }
 
   // --- Audit Logs ---
+  @CacheTTL(60)
   @Get('audit-logs')
   listAuditLogs(@Query('page') page?: number, @Query('limit') limit?: number) {
     return this.admin.listAuditLogs(page || 1, limit || 50)
   }
 
   // --- Feature Flags ---
+  @CacheTTL(60)
   @Get('feature-flags')
   listFeatureFlags() {
     return this.admin.listFeatureFlags()
@@ -216,6 +223,7 @@ export class AdminController {
   }
 
   // --- Credit Transactions ---
+  @CacheTTL(60)
   @Get('credit-transactions')
   listCreditTransactions(@Query('page') page?: number, @Query('limit') limit?: number) {
     return this.admin.listCreditTransactions(page || 1, limit || 20)

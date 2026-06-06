@@ -20,6 +20,11 @@ import 'screens/subscription_screen.dart';
 import 'screens/privacy_screen.dart';
 import 'screens/delete_account_screen.dart';
 import 'screens/admin/admin_dashboard.dart';
+import 'screens/redesign/home_screen.dart';
+import 'screens/redesign/video_editor_screen.dart';
+import 'screens/redesign/ai_studio_screen.dart';
+import 'screens/redesign/template_discovery_screen.dart';
+import 'screens/redesign/export_screen.dart';
 import 'screens/admin/admin_users_screen.dart';
 import 'screens/admin/admin_effects_screen.dart';
 import 'screens/admin/admin_content_screen.dart';
@@ -159,6 +164,31 @@ Route<dynamic>? _onGenerateRoute(RouteSettings settings) {
         case '/admin/analytics':
           return AdminAnalyticsScreen(
             onBack: () => Navigator.of(context).pop(),
+          );
+        case '/home-redesign':
+          return HomeScreenRedesign(
+            onNavigate: (route, {args}) => Navigator.of(context).pushNamed(route, arguments: args),
+          );
+        case '/editor-redesign':
+          return VideoEditorScreenRedesign(
+            projectId: args['projectId'] as String?,
+            onBack: () => Navigator.of(context).pop(),
+            onExport: (projectId) => Navigator.of(context).pushNamed('/export-redesign', arguments: {'projectId': projectId}),
+          );
+        case '/ai-studio-redesign':
+          return AiStudioScreenRedesign(
+            onBack: () => Navigator.of(context).pop(),
+          );
+        case '/templates-redesign':
+          return TemplateDiscoveryScreen(
+            onBack: () => Navigator.of(context).pop(),
+            onNavigate: (route, {args}) => Navigator.of(context).pushNamed(route, arguments: args),
+          );
+        case '/export-redesign':
+          return ExportScreenRedesign(
+            projectId: args['projectId'] as String?,
+            onBack: () => Navigator.of(context).pop(),
+            onNavigate: (route) => Navigator.of(context).pushNamed(route),
           );
         default:
           return Scaffold(body: Center(child: Text('Route not found: ${settings.name}', style: const TextStyle(color: Colors.white))));

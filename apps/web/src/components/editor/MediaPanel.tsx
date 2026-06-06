@@ -27,7 +27,7 @@ const MediaItem = React.memo(({ item }: { item: typeof mediaItems[0] }) => (
   </div>
 ))
 
-export function MediaPanel() {
+export const MediaPanel = React.memo(function MediaPanel() {
   return (
     <div className="w-60 bg-surface border-r border-border flex flex-col shrink-0">
       <div className="h-10 border-b border-border flex items-center justify-between px-3">
@@ -69,4 +69,4 @@ export function MediaPanel() {
       </div>
     </div>
   )
-}
+})

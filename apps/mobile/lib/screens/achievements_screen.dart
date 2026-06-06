@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/haptic_service.dart';
@@ -14,12 +13,12 @@ class AchievementsScreen extends StatefulWidget {
 
 class _AchievementsScreenState extends State<AchievementsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  int _streakDays = 7;
-  double _dailyGoalProgress = 0.65;
-  int _currentLevel = 12;
-  double _xpProgress = 0.72;
-  int _totalXp = 4850;
-  int _xpForNextLevel = 1500;
+  final int _streakDays = 7;
+  final double _dailyGoalProgress = 0.65;
+  final int _currentLevel = 12;
+  final double _xpProgress = 0.72;
+  final int _totalXp = 4850;
+  final int _xpForNextLevel = 1500;
 
   final _achievements = List.generate(8, (i) => Achievement(
     title: 'Achievement ${i + 1}',
@@ -179,7 +178,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: _achievements.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (_, i) {
         final a = _achievements[i];
         return Container(
@@ -238,7 +237,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: milestones.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (_, i) {
         final milestone = milestones[i];
         final reached = _streakDays >= milestone;

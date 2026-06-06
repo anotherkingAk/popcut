@@ -1,12 +1,13 @@
 'use client'
 
+import React from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Undo2, Redo2, Scissors, Copy, Trash2,
   Download, Play, Square, Clock,
 } from 'lucide-react'
 
-export function EditorToolbar() {
+export const EditorToolbar = React.memo(function EditorToolbar() {
   return (
     <div className="h-12 bg-surface border-b border-border flex items-center justify-between px-4 shrink-0">
       <div className="flex items-center gap-1">
@@ -31,4 +32,4 @@ export function EditorToolbar() {
       </div>
     </div>
   )
-}
+})

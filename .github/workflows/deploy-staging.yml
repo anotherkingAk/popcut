@@ -1,3 +1,31 @@
+# Deploy to Staging Environment
+#
+# REQUIRED GITHUB SECRETS:
+#   AWS_ROLE_ARN       - IAM role for OIDC-based AWS auth (needs permissions for SSM, ECR/ECS, or EC2)
+#   AWS_REGION         - AWS region (e.g. us-east-1)
+#   HOST               - SSH host of the staging EC2 instance running Docker Compose
+#   USERNAME           - SSH username (typically ec2-user)
+#   SSH_KEY            - Private SSH key for the staging host
+#   SLACK_WEBHOOK_URL  - Slack incoming webhook for deployment failure notifications
+#
+# ⚠ KNOWN GAPS:
+#   1. No Terraform apply step - infrastructure changes require manual out-of-band apply.
+#      Add a 'terraform' job before 'deploy' that runs:
+#        cd infra/terraform/environments/staging && terraform apply -auto-approve
+#   2. Domain mismatch: tfvars uses staging.popcut.ai but health checks use staging.popcut.app.
+#      Align the domain in terraform.tfvars with the actual staging DNS.
+#   3. certificate_arn is empty in staging/terraform.tfvars - set a valid ACM cert ARN
+#      before HTTPS listener can serve traffic.
+#   4. Deploy model mismatch: Terraform provisions Auto Scaling Groups but this workflow
+#      deploys via SSH to a single host running Docker Compose. Consider replacing with
+#      ASG instance refresh or migrating to ECS/Fargate.
+#   5. No 'latest' Docker tag - only commit SHA tags. Add e.g. staging-latest for rollback.
+#   6. Staging health checks don't use SMOKE_TEST_TOKEN (unlike production) - add if auth
+#      is required on the staging health endpoint.
+#
+# TERRAFORM WORKSPACE: staging
+#   State key: environments/staging/terraform.tfstate
+
 name: Deploy to Staging
 
 on:
@@ -14,6 +42,14 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  # TODO: Add a 'terraform' job here that runs:
+  #   - uses: hashicorp/setup-terraform@v3
+  #   - aws-actions/configure-aws-credentials@v4 (for TF backend access)
+  #   - cd infra/terraform/environments/staging
+  #   - terraform init && terraform apply -auto-approve
+  # This ensures infrastructure is up-to-date before deploying application code.
+  # The terraform.tfvars file uses workspace "staging" and state key "environments/staging/terraform.tfstate".
+
   build:
     name: Build Artifacts
     runs-on: ubuntu-latest
@@ -54,7 +90,9 @@ jobs:
           context: .
           file: docker/Dockerfile.auth-service
           push: true
-          tags: ${{ env.REGISTRY }}/${{ github.repository }}/auth-service:staging-${{ github.sha }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository }}/auth-service:staging-${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ github.repository }}/auth-service:staging-latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -64,7 +102,9 @@ jobs:
           context: .
           file: docker/Dockerfile.web
           push: true
-          tags: ${{ env.REGISTRY }}/${{ github.repository }}/web:staging-${{ github.sha }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository }}/web:staging-${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ github.repository }}/web:staging-latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -74,7 +114,9 @@ jobs:
           context: .
           file: docker/Dockerfile.ai-service
           push: true
-          tags: ${{ env.REGISTRY }}/${{ github.repository }}/ai-service:staging-${{ github.sha }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository }}/ai-service:staging-${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ github.repository }}/ai-service:staging-latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

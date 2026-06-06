@@ -232,7 +232,7 @@ class _ExportScreenRedesignState extends State<ExportScreenRedesign>
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: _resolutions.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemBuilder: (context, i) {
           final res = _resolutions[i];
           final isSelected = _resolution == res;

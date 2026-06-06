@@ -332,7 +332,7 @@ class _DownloadManagerScreenState extends State<DownloadManagerScreen> with Sing
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: availItems.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (_, i) {
         return Container(
           padding: const EdgeInsets.all(14),
@@ -425,7 +425,7 @@ class _DownloadManagerScreenState extends State<DownloadManagerScreen> with Sing
             label: Text('Clear All Cache (${_totalCacheSize()})'),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.error,
-              side: const BorderSide(color: AppColors.error.withValues(alpha: 0.4)),
+              side: BorderSide(color: AppColors.error.withValues(alpha: 0.4)),
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
           ),

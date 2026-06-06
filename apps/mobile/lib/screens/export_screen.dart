@@ -248,7 +248,7 @@ class _ExportScreenState extends State<ExportScreen> with SingleTickerProviderSt
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: AppColors.primary,
+            activeThumbColor: AppColors.primary,
             inactiveThumbColor: AppColors.foregroundMuted,
             inactiveTrackColor: AppColors.muted,
           ),

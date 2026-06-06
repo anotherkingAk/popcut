@@ -180,7 +180,11 @@ class _TimelineZoneState extends State<TimelineZone> {
       color: AppColors.panelBg,
       padding: const EdgeInsets.only(left: _trackLabelWidth),
       child: CustomPaint(
-        painter: _RulerPainter(totalDuration: widget.totalDuration, pixelsPerSecond: _pixelsPerSecond),
+        painter: _RulerPainter(
+          totalDuration: widget.totalDuration,
+          pixelsPerSecond: _pixelsPerSecond,
+          scrollOffset: _scrollOffset,
+        ),
         size: const Size(double.infinity, 22),
       ),
     );
@@ -247,7 +251,11 @@ class _TrackRow extends StatelessWidget {
       child: Stack(
         children: [
           CustomPaint(
-            painter: _GridPainter(totalDuration: totalDuration, pixelsPerSecond: pixelsPerSecond),
+            painter: _GridPainter(
+              totalDuration: totalDuration,
+              pixelsPerSecond: pixelsPerSecond,
+              scrollOffset: scrollOffset,
+            ),
             size: Size(double.infinity, _trackHeight(track.type)),
           ),
           ...visibleClips.map((clip) => Positioned(
@@ -488,15 +496,20 @@ class _PlayheadAssembly extends StatelessWidget {
 class _RulerPainter extends CustomPainter {
   final double totalDuration;
   final double pixelsPerSecond;
-  _RulerPainter({required this.totalDuration, required this.pixelsPerSecond});
+  final double scrollOffset;
+  _RulerPainter({required this.totalDuration, required this.pixelsPerSecond, this.scrollOffset = 0});
 
   ui.Picture? _cachedPicture;
   double _cachedDuration = -1;
   double _cachedPixelsPerSecond = -1;
+  double _cachedScrollOffset = -1;
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (_cachedPicture != null && _cachedDuration == totalDuration && _cachedPixelsPerSecond == pixelsPerSecond) {
+    if (_cachedPicture != null &&
+        _cachedDuration == totalDuration &&
+        _cachedPixelsPerSecond == pixelsPerSecond &&
+        _cachedScrollOffset == scrollOffset) {
       canvas.drawPicture(_cachedPicture!);
       return;
     }
@@ -506,10 +519,12 @@ class _RulerPainter extends CustomPainter {
     final paint = Paint()..color = AppColors.borderLight..strokeWidth = 0.5;
     final txt = TextPainter(textDirection: TextDirection.ltr);
 
-    for (double i = 0; i <= totalDuration; i += 0.5) {
-      final x = i * pixelsPerSecond;
-      final isMajor = i % 5 == 0;
-      final isMinor = i % 1 == 0;
+    final startT = (scrollOffset / pixelsPerSecond).floor().toDouble();
+    final endT = ((scrollOffset + size.width) / pixelsPerSecond).ceil().toDouble();
+    final clampedStart = startT.clamp(0, totalDuration);
+    final clampedEnd = endT.clamp(0, totalDuration);
+
+    for (double i = clampedStart; i <= clampedEnd; i += 0.5) {
 
       if (isMajor) {
         pictureCanvas.drawLine(Offset(x, 12), Offset(x, size.height), paint);
@@ -526,29 +541,41 @@ class _RulerPainter extends CustomPainter {
     _cachedPicture = pictureRecorder.endRecording();
     _cachedDuration = totalDuration;
     _cachedPixelsPerSecond = pixelsPerSecond;
+    _cachedScrollOffset = scrollOffset;
     canvas.drawPicture(_cachedPicture!);
   }
 
   @override
-  bool shouldRepaint(covariant _RulerPainter old) => old.totalDuration != totalDuration || old.pixelsPerSecond != pixelsPerSecond;
+  bool shouldRepaint(covariant _RulerPainter old) =>
+      old.totalDuration != totalDuration ||
+      old.pixelsPerSecond != pixelsPerSecond ||
+      old.scrollOffset != scrollOffset;
 }
 
 class _GridPainter extends CustomPainter {
   final double totalDuration;
   final double pixelsPerSecond;
-  _GridPainter({required this.totalDuration, required this.pixelsPerSecond});
+  final double scrollOffset;
+  _GridPainter({required this.totalDuration, required this.pixelsPerSecond, this.scrollOffset = 0});
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..color = AppColors.border.withValues(alpha: 0.25)..strokeWidth = 0.3;
-    for (double i = 0; i <= totalDuration; i++) {
+    final startT = (scrollOffset / pixelsPerSecond).floor().toDouble();
+    final endT = ((scrollOffset + size.width) / pixelsPerSecond).ceil().toDouble();
+    final clampedStart = startT.clamp(0, totalDuration);
+    final clampedEnd = endT.clamp(0, totalDuration);
+    for (double i = clampedStart; i <= clampedEnd; i++) {
       final x = i * pixelsPerSecond;
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _GridPainter old) => old.totalDuration != totalDuration || old.pixelsPerSecond != pixelsPerSecond;
+  bool shouldRepaint(covariant _GridPainter old) =>
+      old.totalDuration != totalDuration ||
+      old.pixelsPerSecond != pixelsPerSecond ||
+      old.scrollOffset != scrollOffset;
 }
 
 class _Waveform extends StatelessWidget {

@@ -19,7 +19,8 @@ class PopCutPlayhead extends StatelessWidget {
   Widget build(BuildContext context) {
     final fraction = totalDuration > 0 ? position / totalDuration : 0.0;
 
-    return SizedBox(
+    return RepaintBoundary(
+      child: SizedBox(
       height: height,
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -92,7 +93,8 @@ class PopCutPlayhead extends StatelessWidget {
           );
         },
       ),
-    );
+    ),
+  );
   }
 }
 
@@ -120,7 +122,6 @@ class _TimeRulerPainter extends CustomPainter {
       ..strokeWidth = 0.5;
 
     final interval = totalDuration > 60 ? 10.0 : 5.0;
-    final pixelInterval = width / (totalDuration / interval);
 
     for (double t = 0; t <= totalDuration; t += interval) {
       final x = (t / totalDuration) * width;

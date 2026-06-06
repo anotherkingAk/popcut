@@ -29,23 +29,19 @@ export class SupportService {
   }
 
   async update(id: string, data: any) {
-    await this.get(id)
     return this.prisma.supportTicket.update({ where: { id }, data })
   }
 
   async remove(id: string) {
-    await this.get(id)
     await this.prisma.supportTicket.delete({ where: { id } })
     return { message: 'Support ticket deleted' }
   }
 
   async assign(id: string, assignedTo: string) {
-    await this.get(id)
     return this.prisma.supportTicket.update({ where: { id }, data: { assignedTo } })
   }
 
   async resolve(id: string) {
-    await this.get(id)
     return this.prisma.supportTicket.update({
       where: { id },
       data: { status: 'resolved', resolvedAt: new Date() },

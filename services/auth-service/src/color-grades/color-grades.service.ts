@@ -25,12 +25,10 @@ export class ColorGradesService {
   }
 
   async update(id: string, data: any) {
-    await this.get(id)
     return this.prisma.colorGrade.update({ where: { id }, data })
   }
 
   async remove(id: string) {
-    await this.get(id)
     await this.prisma.colorGrade.delete({ where: { id } })
     return { message: 'Color grade deleted' }
   }

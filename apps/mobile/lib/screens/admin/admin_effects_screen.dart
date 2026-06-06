@@ -36,7 +36,7 @@ class AdminEffectsScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              Switch(value: i % 3 != 0, onChanged: (_) { HapticService.trigger(HapticLevel.selection); }, activeColor: AppColors.constructive, inactiveThumbColor: AppColors.foregroundMuted),
+              Switch(value: i % 3 != 0, onChanged: (_) { HapticService.trigger(HapticLevel.selection); }, activeThumbColor: AppColors.constructive, inactiveThumbColor: AppColors.foregroundMuted),
             ],
           ),
         ),
