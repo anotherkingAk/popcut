@@ -13,9 +13,9 @@ export interface AppConfig {
     {
       provide: 'APP_CONFIG',
       useFactory: (): AppConfig => ({
-        jwtSecret: process.env.JWT_SECRET || 'capcard-dev-secret-change-in-production',
+        jwtSecret: process.env.JWT_SECRET || 'popcut-dev-secret-change-in-production',
         jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
-        databaseUrl: process.env.DATABASE_URL || 'postgresql://capcard:capcard@localhost:5432/capcard',
+        databaseUrl: process.env.DATABASE_URL || 'postgresql://popcut:popcut@localhost:5432/popcut',
         port: parseInt(process.env.PORT || '4001', 10),
       }),
     },

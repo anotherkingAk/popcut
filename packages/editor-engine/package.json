@@ -1,5 +1,5 @@
 {
-  "name": "@capcard/editor-engine",
+  "name": "@popcut/editor-engine",
   "version": "1.0.0",
   "private": true,
   "type": "module",

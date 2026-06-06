@@ -1,7 +1,7 @@
 'use client'
 
 import { create } from 'zustand'
-import { api, type AuthUser } from '@capcard/api-sdk'
+import { api, type AuthUser } from '@popcut/api-sdk'
 
 interface AuthState {
   user: AuthUser | null

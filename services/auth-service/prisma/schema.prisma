@@ -7,17 +7,32 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  USER
+  MODERATOR
+  ADMIN
+  OWNER
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
   password  String
   name      String?
   avatar    String?
+  role      Role     @default(USER)
+  credits   Int      @default(0)
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  projects  Project[]
-  teams     TeamMember[]
+  projects         Project[]
+  teams            TeamMember[]
+  subscriptions    Subscription[]
+  creditTxns       CreditTransaction[]
+  aiJobs           AIJob[]
+  exportJobs       ExportJob[]
+  auditLogs        AuditLog[]
 }
 
 model Project {
@@ -27,6 +42,8 @@ model Project {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   data      Json?
   thumbnail String?
+  duration  Int      @default(0)
+  status    String   @default("draft")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -48,4 +65,164 @@ model TeamMember {
   team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@unique([userId, teamId])
+}
+
+model Template {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  thumbnail   String?
+  category    String   @default("general")
+  tags        String[]
+  data        Json
+  isPublic    Boolean  @default(true)
+  isPremium   Boolean  @default(false)
+  price       Int      @default(0)
+  usageCount  Int      @default(0)
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Effect {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  type        String   @default("visual")
+  thumbnail   String?
+  config      Json
+  category    String   @default("general")
+  isPublic    Boolean  @default(true)
+  isPremium   Boolean  @default(false)
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Filter {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  thumbnail   String?
+  config      Json
+  category    String   @default("general")
+  isPublic    Boolean  @default(true)
+  isPremium   Boolean  @default(false)
+  intensity   Float    @default(0.5)
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Font {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  family    String
+  url       String?
+  category  String   @default("sans-serif")
+  isPublic  Boolean  @default(true)
+  isPremium Boolean  @default(false)
+  formats   String[]
+  createdBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Audio {
+  id        String   @id @default(cuid())
+  name      String
+  url       String?
+  duration  Int      @default(0)
+  category  String   @default("music")
+  tags      String[]
+  isPublic  Boolean  @default(true)
+  isPremium Boolean  @default(false)
+  bpm       Int?
+  key       String?
+  mood      String?
+  createdBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Subscription {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan          String   @default("free")
+  status        String   @default("active")
+  price         Int      @default(0)
+  startDate     DateTime @default(now())
+  endDate       DateTime?
+  autoRenew     Boolean  @default(true)
+  stripeId      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model CreditTransaction {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Int
+  type      String   @default("purchase")
+  reference String?
+  description String?
+  createdAt DateTime @default(now())
+}
+
+model AIJob {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   @default("caption")
+  status    String   @default("queued")
+  input     Json?
+  output    Json?
+  progress  Int      @default(0)
+  error     String?
+  startedAt DateTime?
+  completedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ExportJob {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  format    String   @default("mp4")
+  quality   String   @default("1080p")
+  status    String   @default("queued")
+  url       String?
+  progress  Int      @default(0)
+  error     String?
+  startedAt DateTime?
+  completedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  entity    String?
+  entityId  String?
+  metadata  Json?
+  ip        String?
+  createdAt DateTime @default(now())
+}
+
+model FeatureFlag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  enabled   Boolean  @default(false)
+  description String?
+  rules     Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

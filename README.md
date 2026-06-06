@@ -1,4 +1,4 @@
-# CapCard Pro
+# PopCut
 
 AI-powered professional video editing platform.
 
@@ -6,25 +6,19 @@ AI-powered professional video editing platform.
 
 ```
 apps/
-  web/          Next.js 16 web app
-  desktop/      Electron desktop app (coming soon)
-  mobile/       Flutter mobile app (coming soon)
+  web/          Next.js 16 web app (editor)
+  admin/        Next.js 16 admin panel
+  mobile/       Flutter mobile app
 packages/
   ui/           Shared UI components
   editor-engine/ Core video editing engine
   api-sdk/      API client SDK
   animations/   Animation library
 services/
-  auth-service/    NestJS authentication service
-  project-service/ Project management service
-  export-service/  Video export service
-  ai-service/      FastAPI AI service
-  media-service/   Media processing service
-ai-services/
-  captioning/      AI caption generation
-  object-detection/Object detection models
-  video-generation/Text-to-video pipeline
-  voice-cloning/   Voice synthesis
+  auth-service/    NestJS API (auth, admin, RBAC)
+  ai-service/      FastAPI ai-service
+docker/
+  docker-compose.yml  PostgreSQL 17, Redis 7, MinIO
 ```
 
 ## Quick Start

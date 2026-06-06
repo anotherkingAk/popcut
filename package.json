@@ -1,10 +1,10 @@
 {
-  "name": "capcard-pro",
+  "name": "popcut",
   "version": "1.0.0",
   "private": true,
-  "description": "AI-powered professional video editing platform",
+  "description": "PopCut - AI-powered professional video editing platform",
   "scripts": {
-    "dev": "concurrently \"pnpm --filter @capcard/web dev\" \"pnpm --filter @capcard/auth-service dev\"",
+    "dev": "concurrently \"pnpm --filter @popcut/web dev\" \"pnpm --filter @popcut/admin dev\" \"pnpm --filter @popcut/auth-service dev\"",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",

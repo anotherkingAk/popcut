@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useCallback } from 'react'
 import { create } from 'zustand'
-import { TimelineEngine } from '@capcard/editor-engine'
+import { TimelineEngine } from '@popcut/editor-engine'
 
 interface EditorState {
   engine: TimelineEngine | null

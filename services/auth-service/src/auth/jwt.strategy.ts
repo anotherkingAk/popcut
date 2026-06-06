@@ -8,7 +8,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private readonly authService: AuthService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: process.env.JWT_SECRET || 'capcard-dev-secret-change-in-production',
+      secretOrKey: process.env.JWT_SECRET || 'popcut-dev-secret-change-in-production',
     })
   }
 

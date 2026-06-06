@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { TimelineEngine } from '@capcard/editor-engine'
+import { TimelineEngine } from '@popcut/editor-engine'
 import { useEditorStore } from '@/hooks/useEditor'
 import { EditorToolbar } from '@/components/editor/EditorToolbar'
 import { Timeline } from '@/components/editor/Timeline'

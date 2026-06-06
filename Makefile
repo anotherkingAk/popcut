@@ -43,6 +43,10 @@ ai-dev:
 web-dev:
 	cd apps/web && pnpm dev
 
+# Admin
+admin-dev:
+	cd apps/admin && pnpm dev
+
 # Setup full dev environment
 setup: install dev-services auth-db-setup
 	echo "Setup complete. Run 'make dev' to start."

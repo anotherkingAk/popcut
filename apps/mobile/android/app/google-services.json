@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "745296188353",
+    "firebase_url": "https://voidvision-985ab-default-rtdb.firebaseio.com",
+    "project_id": "voidvision-985ab",
+    "storage_bucket": "voidvision-985ab.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:745296188353:android:0b39dc679d44876dba1540",
+        "android_client_info": {
+          "package_name": "com.popcut.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAWKXEb7-qZ6dk5Uqm7MBz-3d2zHBjHAzU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -7,3 +7,16 @@ dist/
 .DS_Store
 coverage/
 .turbo/
+.idea/
+*.apk
+*.apk.zsh
+out/
+.next/
+__pycache__/
+*.pyc
+.pytest_cache/
+venv/
+.venv/
+*.egg-info/
+flutter_export_environment.sh
+.obsidian/

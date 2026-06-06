@@ -4,7 +4,7 @@ from pydantic import BaseModel
 import uuid
 from typing import Optional
 
-app = FastAPI(title="CapCard AI Service", version="1.0.0")
+app = FastAPI(title="PopCut AI Service", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -35,10 +35,10 @@ async def health():
 async def generate_captions(request: CaptionRequest):
     return CaptionResponse(
         segments=[
-            {"start": 0.0, "end": 2.5, "text": "Welcome to CapCard Pro"},
+            {"start": 0.0, "end": 2.5, "text": "Welcome to PopCut"},
             {"start": 2.5, "end": 5.0, "text": "AI-powered video editing"},
         ],
-        full_text="Welcome to CapCard Pro. AI-powered video editing."
+        full_text="Welcome to PopCut. AI-powered video editing."
     )
 
 @app.post("/ai/transcribe")

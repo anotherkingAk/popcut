@@ -4,9 +4,9 @@ services:
   postgres:
     image: postgres:17-alpine
     environment:
-      POSTGRES_USER: capcard
-      POSTGRES_PASSWORD: capcard
-      POSTGRES_DB: capcard
+      POSTGRES_USER: popcut
+      POSTGRES_PASSWORD: popcut
+      POSTGRES_DB: popcut
     ports:
       - '5432:5432'
     volumes:
@@ -24,8 +24,8 @@ services:
       - '9000:9000'
       - '9001:9001'
     environment:
-      MINIO_ROOT_USER: capcard
-      MINIO_ROOT_PASSWORD: capcard123
+      MINIO_ROOT_USER: popcut
+      MINIO_ROOT_PASSWORD: popcut123
     volumes:
       - miniodata:/data
 

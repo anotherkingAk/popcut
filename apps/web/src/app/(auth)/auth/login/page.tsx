@@ -18,7 +18,7 @@ export default function LoginPage() {
             <Video className="w-6 h-6 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-text">Welcome back</h1>
-          <p className="text-text-secondary text-sm">Sign in to your CapCard account</p>
+          <p className="text-text-secondary text-sm">Sign in to your PopCut account</p>
         </div>
 
         <form

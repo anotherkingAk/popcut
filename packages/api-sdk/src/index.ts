@@ -12,7 +12,7 @@ export interface AuthUser {
   avatar?: string
 }
 
-export class CapCardAPI {
+export class PopCutAPI {
   private client: AxiosInstance
   private tokens: AuthTokens | null = null
 
@@ -107,4 +107,4 @@ export class CapCardAPI {
   }
 }
 
-export const api = new CapCardAPI()
+export const api = new PopCutAPI()
