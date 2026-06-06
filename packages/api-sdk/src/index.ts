@@ -16,7 +16,7 @@ export class PopCutAPI {
   private client: AxiosInstance
   private tokens: AuthTokens | null = null
 
-  constructor(baseURL: string = 'http://localhost:4000') {
+  constructor(baseURL: string = 'http://localhost:4001') {
     this.client = axios.create({
       baseURL,
       timeout: 30000,
@@ -35,7 +35,7 @@ export class PopCutAPI {
       async err => {
         if (err.response?.status === 401 && this.tokens?.refreshToken) {
           try {
-            const { data } = await axios.post(`${baseURL}/auth/refresh`, {
+            const { data } = await axios.post(`${baseURL}/api/v1/auth/refresh`, {
               refreshToken: this.tokens.refreshToken,
             })
             this.setTokens(data)
@@ -63,30 +63,30 @@ export class PopCutAPI {
   }
 
   async authWithEmail(email: string, password: string): Promise<AuthTokens> {
-    const { data } = await this.client.post('/auth/login', { email, password })
+    const { data } = await this.client.post('/api/v1/auth/login', { email, password })
     this.setTokens(data)
     return data
   }
 
   async register(email: string, password: string, name?: string): Promise<AuthTokens> {
-    const { data } = await this.client.post('/auth/register', { email, password, name })
+    const { data } = await this.client.post('/api/v1/auth/register', { email, password, name })
     this.setTokens(data)
     return data
   }
 
   async authWithGoogle(token: string): Promise<AuthTokens> {
-    const { data } = await this.client.post('/auth/google', { token })
+    const { data } = await this.client.post('/api/v1/auth/google', { token })
     this.setTokens(data)
     return data
   }
 
   async logout(): Promise<void> {
-    await this.client.post('/auth/logout')
+    await this.client.post('/api/v1/auth/logout')
     this.clearTokens()
   }
 
   async getMe(): Promise<AuthUser> {
-    const { data } = await this.client.get('/auth/me')
+    const { data } = await this.client.get('/api/v1/auth/me')
     return data
   }
 

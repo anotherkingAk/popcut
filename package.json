@@ -4,7 +4,8 @@
   "private": true,
   "description": "PopCut - AI-powered professional video editing platform",
   "scripts": {
-    "dev": "concurrently \"pnpm --filter @popcut/web dev\" \"pnpm --filter @popcut/admin dev\" \"pnpm --filter @popcut/auth-service dev\"",
+    "dev": "concurrently \"pnpm --filter @popcut/web dev\" \"pnpm --filter @popcut/admin-web dev\" \"pnpm --filter @popcut/auth-service dev\"",
+    "dev:admin": "pnpm --filter @popcut/admin-web dev",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",

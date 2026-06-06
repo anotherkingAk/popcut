@@ -61,6 +61,20 @@ jobs:
         run: pnpm --filter @popcut/auth-service exec prisma validate
         working-directory: services/auth-service
 
+      - name: Prisma migrate check
+        run: |
+          pnpm --filter @popcut/auth-service exec prisma migrate deploy
+          pnpm --filter @popcut/auth-service exec prisma validate
+        working-directory: services/auth-service
+        env:
+          DATABASE_URL: postgresql://popcut:popcut@localhost:5432/popcut_test
+
+      - name: Run tests
+        run: pnpm --filter @popcut/auth-service test
+        env:
+          DATABASE_URL: postgresql://popcut:popcut@localhost:5432/popcut_test
+          REDIS_URL: redis://localhost:6379
+
       - name: Lint
         run: pnpm --filter @popcut/auth-service lint
         continue-on-error: true
@@ -68,6 +82,15 @@ jobs:
       - name: Build
         run: pnpm --filter @popcut/auth-service build
         working-directory: services/auth-service
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-dist
+          path: |
+            services/auth-service/dist
+            packages/*/dist
+          retention-days: 7
 
       - name: Cache build output
         uses: actions/cache@v4

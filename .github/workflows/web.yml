@@ -28,6 +28,20 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+            services/*/node_modules
+          key: ${{ runner.os }}-modules-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: TypeScript type-check
+        run: pnpm exec tsc --noEmit
+        continue-on-error: true
+
       - name: Build SDK & Engine
         run: |
           pnpm --filter @popcut/api-sdk build
@@ -48,9 +62,26 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: http://localhost:4001
 
+      - name: Lint
+        run: pnpm lint
+
       - name: Lint web
         run: pnpm --filter @popcut/web lint
         continue-on-error: true
+
+      - name: Bundle size report
+        run: |
+          echo "## Bundle Size Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Output | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|------|" >> $GITHUB_STEP_SUMMARY
+          for dir in apps/web/out apps/admin/out; do
+            if [ -d "$dir" ]; then
+              size=$(du -sh "$dir" 2>/dev/null | cut -f1)
+              name=$(basename "$(dirname "$dir")")
+              echo "| $name | $size |" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
 
       - name: Upload web artifact
         uses: actions/upload-pages-artifact@v3

@@ -1,0 +1,99 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+  log_level: info
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: docker
+    pipeline_stages:
+      - docker: {}
+      - static_labels:
+          service: docker
+    static_configs:
+      - labels:
+          job: docker
+          __path__: /var/lib/docker/containers/*/*-log.log
+
+  - job_name: system
+    pipeline_stages:
+      - static_labels:
+          service: system
+    static_configs:
+      - labels:
+          job: system
+          __path__: /var/log/syslog
+      - labels:
+          job: system
+          __path__: /var/log/messages
+
+  - job_name: auth-service
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<timestamp>\S+) (?P<level>\S+) (?P<message>.*)$'
+      - static_labels:
+          service: auth-service
+    static_configs:
+      - labels:
+          job: auth-service
+          __path__: /var/log/popcut/auth-service/*.log
+
+  - job_name: ai-service
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<timestamp>\S+) (?P<level>\S+) (?P<message>.*)$'
+      - static_labels:
+          service: ai-service
+    static_configs:
+      - labels:
+          job: ai-service
+          __path__: /var/log/popcut/ai-service/*.log
+
+  - job_name: export-service
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<timestamp>\S+) (?P<level>\S+) (?P<message>.*)$'
+      - static_labels:
+          service: export-service
+    static_configs:
+      - labels:
+          job: export-service
+          __path__: /var/log/popcut/export-service/*.log
+
+  - job_name: media-service
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<timestamp>\S+) (?P<level>\S+) (?P<message>.*)$'
+      - static_labels:
+          service: media-service
+    static_configs:
+      - labels:
+          job: media-service
+          __path__: /var/log/popcut/media-service/*.log
+
+  - job_name: project-service
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<timestamp>\S+) (?P<level>\S+) (?P<message>.*)$'
+      - static_labels:
+          service: project-service
+    static_configs:
+      - labels:
+          job: project-service
+          __path__: /var/log/popcut/project-service/*.log
+
+  - job_name: template-service
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<timestamp>\S+) (?P<level>\S+) (?P<message>.*)$'
+      - static_labels:
+          service: template-service
+    static_configs:
+      - labels:
+          job: template-service
+          __path__: /var/log/popcut/template-service/*.log

@@ -1,0 +1,37 @@
+import { Injectable, NotFoundException } from '@nestjs/common'
+import { PrismaClient } from '@prisma/client'
+
+@Injectable()
+export class TransitionsService {
+  constructor(private readonly prisma: PrismaClient) {}
+
+  async list(page = 1, limit = 20) {
+    const skip = (page - 1) * limit
+    const [data, total] = await Promise.all([
+      this.prisma.transition.findMany({ skip, take: limit, orderBy: { createdAt: 'desc' } }),
+      this.prisma.transition.count(),
+    ])
+    return { data, total, page, limit, totalPages: Math.ceil(total / limit) }
+  }
+
+  async get(id: string) {
+    const item = await this.prisma.transition.findUnique({ where: { id } })
+    if (!item) throw new NotFoundException('Transition not found')
+    return item
+  }
+
+  async create(data: any) {
+    return this.prisma.transition.create({ data })
+  }
+
+  async update(id: string, data: any) {
+    await this.get(id)
+    return this.prisma.transition.update({ where: { id }, data })
+  }
+
+  async remove(id: string) {
+    await this.get(id)
+    await this.prisma.transition.delete({ where: { id } })
+    return { message: 'Transition deleted' }
+  }
+}

@@ -1,0 +1,107 @@
+name: Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment to rollback
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      version:
+        description: Docker image tag to rollback to (e.g. 1.0.0 or staging-abc123)
+        required: true
+        type: string
+
+concurrency:
+  group: rollback-${{ github.event.inputs.environment }}
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  rollback:
+    name: Rollback ${{ github.event.inputs.environment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: ${{ github.event.inputs.environment }}
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Verify image exists
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ github.repository }}/web:${{ github.event.inputs.version }}"
+          echo "Verifying image: $IMAGE"
+          docker pull "$IMAGE" 2>/dev/null || {
+            echo "::error::Image $IMAGE not found in registry"
+            exit 1
+          }
+
+      - name: Deploy rollback version
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /opt/popcut
+            export TAG=${{ github.event.inputs.version }}
+            docker compose pull
+            docker compose up -d --remove-orphans
+            docker image prune -f
+
+      - name: Restore database if needed
+        run: |
+          echo "::notice::Database rollback not triggered automatically."
+          echo "If a database migration rollback is required, run manually:"
+          echo "  pnpm --filter @popcut/auth-service exec prisma migrate resolve --rolled-back <migration-name>"
+
+      - name: Verify health
+        run: |
+          HEALTH_URL="${{ github.event.inputs.environment == 'production' && 'https://api.popcut.app' || 'https://staging.popcut.app' }}/api/health"
+          echo "Checking health at: $HEALTH_URL"
+          curl --fail --retry 10 --retry-delay 10 --retry-max-time 120 \
+            -o /dev/null -s -w "%{http_code}" \
+            "$HEALTH_URL"
+          echo ""
+          echo "Health check passed"
+
+  notify:
+    name: Notify Team
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [rollback]
+    if: always()
+
+    steps:
+      - name: Send Slack notification
+        uses: slackapi/slack-github-action@v2
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "Rollback to `${{ github.event.inputs.version }}` on ${{ github.event.inputs.environment }}: ${{ needs.rollback.result }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "${{ needs.rollback.result == 'success' && '⏪' || '❌' }} *Rollback ${{ needs.rollback.result == 'success' && 'Complete' || 'Failed' }}*\nEnvironment: `${{ github.event.inputs.environment }}`\nVersion: `${{ github.event.inputs.version }}`\nTriggered by: ${{ github.actor }}\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
+                  }
+                }
+              ]
+            }

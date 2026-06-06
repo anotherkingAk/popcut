@@ -17,7 +17,7 @@ export class AdminService {
     ])
     const recentUsers = await this.prisma.user.findMany({
       orderBy: { createdAt: 'desc' }, take: 5,
-      select: { id: true, email: true, name: true, role: true, createdAt: true },
+      select: { id: true, email: true, name: true, createdAt: true },
     })
     return { users, projects, templates, effects, activeJobs, revenue: revenue._sum.amount || 0, recentUsers }
   }
@@ -29,7 +29,7 @@ export class AdminService {
       this.prisma.user.findMany({
         skip, take: limit,
         orderBy: { createdAt: 'desc' },
-        select: { id: true, email: true, name: true, role: true, avatar: true, credits: true, isActive: true, createdAt: true, updatedAt: true },
+        select: { id: true, email: true, name: true, avatar: true, credits: true, isActive: true, createdAt: true, updatedAt: true },
       }),
       this.prisma.user.count(),
     ])
@@ -281,7 +281,7 @@ export class AdminService {
     return { data, total, page, limit, totalPages: Math.ceil(total / limit) }
   }
 
-  async createCreditTransaction(data: { userId: string; amount: Int; type: string; reference?: string; description?: string }) {
+  async createCreditTransaction(data: { userId: string; amount: number; type: string; reference?: string; description?: string }) {
     return this.prisma.creditTransaction.create({ data })
   }
 }

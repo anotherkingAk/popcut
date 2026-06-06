@@ -7,6 +7,8 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ───────────────────────── Enums ─────────────────────────
+
 enum Role {
   USER
   MODERATOR
@@ -14,47 +16,127 @@ enum Role {
   OWNER
 }
 
+enum TransitionType {
+  DISSOLVE
+  WIPE
+  SLIDE
+  ZOOM
+  CUSTOM
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ContentType {
+  TEMPLATE
+  EFFECT
+  FILTER
+  TRANSITION
+  FONT
+  AUDIO
+  COLOR_GRADE
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+enum ReferralStatus {
+  PENDING
+  COMPLETED
+  EXPIRED
+}
+
+enum SubscriptionInterval {
+  MONTHLY
+  YEARLY
+}
+
+enum NotificationType {
+  SYSTEM
+  SUBSCRIPTION
+  EXPORT
+  AI
+  COLLAB
+  MARKETING
+}
+
+// ───────────────────────── User ─────────────────────────
+
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id        String    @id @default(cuid())
+  email     String    @unique
   password  String
   name      String?
   avatar    String?
-  role      Role     @default(USER)
-  credits   Int      @default(0)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  role      Role      @default(USER)
+  credits   Int       @default(0)
+  isActive  Boolean   @default(true)
+  deletedAt DateTime?
+  lastLoginAt DateTime?
+  planId    String?
+  plan      SubscriptionPlan? @relation(fields: [planId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  projects         Project[]
-  teams            TeamMember[]
-  subscriptions    Subscription[]
-  creditTxns       CreditTransaction[]
-  aiJobs           AIJob[]
-  exportJobs       ExportJob[]
-  auditLogs        AuditLog[]
+  projects      Project[]
+  teams         TeamMember[]
+  subscriptions Subscription[]
+  creditWallet  CreditWallet?
+  creditTxns    CreditTransaction[]
+  aiJobs        AIJob[]
+  exportJobs    ExportJob[]
+  auditLogs     AuditLog[]
+  notifications Notification[]
+  referralsMade Referral[]          @relation("Referrer")
+  referralsUsed Referral[]          @relation("Referred")
+  storageUsage  StorageUsage?
+  supportTickets SupportTicket[]
+
+  @@index([role])
+  @@index([isActive])
+  @@index([deletedAt])
+  @@index([email])
 }
+
+// ───────────────────────── Project ─────────────────────────
 
 model Project {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   name      String
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   data      Json?
   thumbnail String?
-  duration  Int      @default(0)
-  status    String   @default("draft")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  duration  Int       @default(0)
+  status    String    @default("draft")
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  exportJobs ExportJob[]
+
+  @@index([userId, status])
+  @@index([status, createdAt])
+  @@index([deletedAt])
 }
+
+// ───────────────────────── Team ─────────────────────────
 
 model Team {
   id        String        @id @default(cuid())
   name      String
-  members   TeamMember[]
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
+
+  members TeamMember[]
 }
+
+// ───────────────────────── TeamMember ─────────────────────────
 
 model TeamMember {
   id     String @id @default(cuid())
@@ -67,143 +149,309 @@ model TeamMember {
   @@unique([userId, teamId])
 }
 
+// ───────────────────────── Content Models ─────────────────────────
+
 model Template {
-  id          String   @id @default(cuid())
+  id          String         @id @default(cuid())
   name        String
   description String?
   thumbnail   String?
-  category    String   @default("general")
+  category    String         @default("general")
   tags        String[]
   data        Json
-  isPublic    Boolean  @default(true)
-  isPremium   Boolean  @default(false)
-  price       Int      @default(0)
-  usageCount  Int      @default(0)
-  createdBy   String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isPublic    Boolean        @default(true)
+  isPremium   Boolean        @default(false)
+  price       Int            @default(0)
+  usageCount  Int            @default(0)
+  author      String?
+  version     Int            @default(1)
+  status      ContentStatus  @default(DRAFT)
+  deletedAt   DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([status, createdAt])
+  @@index([category])
+  @@index([isPublic, isPremium])
+  @@index([deletedAt])
 }
 
 model Effect {
-  id          String   @id @default(cuid())
+  id          String         @id @default(cuid())
   name        String
   description String?
-  type        String   @default("visual")
+  type        String         @default("visual")
   thumbnail   String?
   config      Json
-  category    String   @default("general")
-  isPublic    Boolean  @default(true)
-  isPremium   Boolean  @default(false)
-  createdBy   String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  category    String         @default("general")
+  tags        String[]
+  isPublic    Boolean        @default(true)
+  isPremium   Boolean        @default(false)
+  price       Int            @default(0)
+  usageCount  Int            @default(0)
+  author      String?
+  version     Int            @default(1)
+  status      ContentStatus  @default(DRAFT)
+  deletedAt   DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([status, createdAt])
+  @@index([category])
+  @@index([isPublic, isPremium])
+  @@index([deletedAt])
 }
 
 model Filter {
-  id          String   @id @default(cuid())
+  id          String         @id @default(cuid())
   name        String
   description String?
   thumbnail   String?
   config      Json
-  category    String   @default("general")
-  isPublic    Boolean  @default(true)
-  isPremium   Boolean  @default(false)
-  intensity   Float    @default(0.5)
-  createdBy   String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  category    String         @default("general")
+  tags        String[]
+  intensity   Float          @default(0.5)
+  isPublic    Boolean        @default(true)
+  isPremium   Boolean        @default(false)
+  price       Int            @default(0)
+  usageCount  Int            @default(0)
+  author      String?
+  version     Int            @default(1)
+  status      ContentStatus  @default(DRAFT)
+  deletedAt   DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([status, createdAt])
+  @@index([category])
+  @@index([isPublic, isPremium])
+  @@index([deletedAt])
 }
 
 model Font {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  family    String
-  url       String?
-  category  String   @default("sans-serif")
-  isPublic  Boolean  @default(true)
-  isPremium Boolean  @default(false)
-  formats   String[]
-  createdBy String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String         @id @default(cuid())
+  name        String         @unique
+  family      String
+  description String?
+  thumbnail   String?
+  url         String?
+  category    String         @default("sans-serif")
+  tags        String[]
+  formats     String[]
+  isPublic    Boolean        @default(true)
+  isPremium   Boolean        @default(false)
+  price       Int            @default(0)
+  usageCount  Int            @default(0)
+  author      String?
+  version     Int            @default(1)
+  status      ContentStatus  @default(DRAFT)
+  deletedAt   DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([status, createdAt])
+  @@index([category])
+  @@index([isPublic, isPremium])
+  @@index([deletedAt])
 }
 
 model Audio {
-  id        String   @id @default(cuid())
-  name      String
-  url       String?
-  duration  Int      @default(0)
-  category  String   @default("music")
-  tags      String[]
-  isPublic  Boolean  @default(true)
-  isPremium Boolean  @default(false)
-  bpm       Int?
-  key       String?
-  mood      String?
-  createdBy String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  thumbnail   String?
+  url         String?
+  duration    Int            @default(0)
+  category    String         @default("music")
+  tags        String[]
+  isPublic    Boolean        @default(true)
+  isPremium   Boolean        @default(false)
+  price       Int            @default(0)
+  usageCount  Int            @default(0)
+  bpm         Int?
+  key         String?
+  mood        String?
+  author      String?
+  version     Int            @default(1)
+  status      ContentStatus  @default(DRAFT)
+  deletedAt   DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([status, createdAt])
+  @@index([category])
+  @@index([isPublic, isPremium])
+  @@index([deletedAt])
 }
 
+model Transition {
+  id          String          @id @default(cuid())
+  name        String
+  description String?
+  type        TransitionType  @default(DISSOLVE)
+  thumbnail   String?
+  preview     String?
+  config      Json
+  category    String          @default("general")
+  tags        String[]
+  isPublic    Boolean         @default(true)
+  isPremium   Boolean         @default(false)
+  price       Int             @default(0)
+  usageCount  Int             @default(0)
+  author      String?
+  version     Int             @default(1)
+  status      ContentStatus   @default(DRAFT)
+  deletedAt   DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([status, createdAt])
+  @@index([type])
+  @@index([category])
+  @@index([isPublic, isPremium])
+  @@index([deletedAt])
+}
+
+model ColorGrade {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  thumbnail   String?
+  lutUrl      String?
+  config      Json
+  category    String         @default("cinematic")
+  tags        String[]
+  intensity   Float          @default(0.5)
+  isPublic    Boolean        @default(true)
+  isPremium   Boolean        @default(false)
+  price       Int            @default(0)
+  usageCount  Int            @default(0)
+  author      String?
+  version     Int            @default(1)
+  status      ContentStatus  @default(DRAFT)
+  deletedAt   DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([status, createdAt])
+  @@index([category])
+  @@index([isPublic, isPremium])
+  @@index([deletedAt])
+}
+
+// ───────────────────────── Subscription ─────────────────────────
+
 model Subscription {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plan          String   @default("free")
-  status        String   @default("active")
-  price         Int      @default(0)
-  startDate     DateTime @default(now())
-  endDate       DateTime?
-  autoRenew     Boolean  @default(true)
-  stripeId      String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan      String   @default("free")
+  status    String   @default("active")
+  price     Int      @default(0)
+  startDate DateTime @default(now())
+  endDate   DateTime?
+  autoRenew Boolean  @default(true)
+  stripeId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, status])
+  @@index([status, endDate])
+  @@index([stripeId])
+}
+
+model SubscriptionPlan {
+  id          String               @id @default(cuid())
+  name        String
+  key         String               @unique
+  description String?
+  price       Int                  @default(0)
+  interval    SubscriptionInterval @default(MONTHLY)
+  credits     Int                  @default(0)
+  features    Json
+  popular     Boolean              @default(false)
+  active      Boolean              @default(true)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  users     User[]
+
+  @@index([active, price])
+  @@index([popular, active])
+}
+
+// ───────────────────────── Credit Wallet ─────────────────────────
+
+model CreditWallet {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance         Int      @default(0)
+  lifetimeCredits Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model CreditTransaction {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  amount    Int
-  type      String   @default("purchase")
-  reference String?
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Int
+  type        String   @default("purchase")
+  reference   String?
   description String?
-  createdAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, type])
+  @@index([reference])
 }
 
+// ───────────────────────── AI / Export ─────────────────────────
+
 model AIJob {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type      String   @default("caption")
-  status    String   @default("queued")
-  input     Json?
-  output    Json?
-  progress  Int      @default(0)
-  error     String?
-  startedAt DateTime?
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String    @default("caption")
+  status      String    @default("queued")
+  input       Json?
+  output      Json?
+  progress    Int       @default(0)
+  error       String?
+  startedAt   DateTime?
   completedAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId, status])
+  @@index([userId, type])
+  @@index([status, createdAt])
 }
 
 model ExportJob {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  projectId String
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  format    String   @default("mp4")
-  quality   String   @default("1080p")
-  status    String   @default("queued")
-  url       String?
-  progress  Int      @default(0)
-  error     String?
-  startedAt DateTime?
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  format      String    @default("mp4")
+  quality     String    @default("1080p")
+  status      String    @default("queued")
+  url         String?
+  progress    Int       @default(0)
+  error       String?
+  startedAt   DateTime?
   completedAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId, status])
+  @@index([projectId])
+  @@index([status, createdAt])
 }
+
+// ───────────────────────── Audit / Monitoring ─────────────────────────
 
 model AuditLog {
   id        String   @id @default(cuid())
@@ -215,14 +463,180 @@ model AuditLog {
   metadata  Json?
   ip        String?
   createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([entity, entityId])
+  @@index([action, createdAt])
+  @@index([createdAt])
 }
 
-model FeatureFlag {
+model AnalyticsEvent {
   id        String   @id @default(cuid())
-  name      String   @unique
-  enabled   Boolean  @default(false)
-  description String?
-  rules     Json?
+  event     String
+  userId    String?
+  category  String
+  label     String?
+  value     Float?
+  metadata  Json?
+  ip        String?
+  userAgent String?
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  @@index([event, createdAt])
+  @@index([category, createdAt])
+  @@index([userId, createdAt])
+}
+
+// ───────────────────────── Feature Flags ─────────────────────────
+
+model FeatureFlag {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  enabled     Boolean  @default(false)
+  description String?
+  rules       Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ───────────────────────── Coupon ─────────────────────────
+
+model Coupon {
+  id           String       @id @default(cuid())
+  code         String       @unique
+  description  String?
+  discountType DiscountType @default(PERCENTAGE)
+  discountValue Int         @default(0)
+  maxUses      Int?
+  usedCount    Int          @default(0)
+  expiresAt    DateTime?
+  active       Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([code])
+  @@index([active, expiresAt])
+}
+
+// ───────────────────────── Referral ─────────────────────────
+
+model Referral {
+  id             String         @id @default(cuid())
+  referrerId     String
+  referrer       User           @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  referredId     String         @unique
+  referred       User           @relation("Referred", fields: [referredId], references: [id], onDelete: Cascade)
+  code           String
+  status         ReferralStatus @default(PENDING)
+  rewardCredits  Int            @default(0)
+  createdAt      DateTime       @default(now())
+  completedAt    DateTime?
+
+  @@index([referrerId, status])
+  @@index([code])
+  @@index([status, createdAt])
+}
+
+// ───────────────────────── Notification ─────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType @default(SYSTEM)
+  title     String
+  body      String
+  data      Json?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, read, createdAt])
+  @@index([userId, type])
+  @@index([type, createdAt])
+}
+
+// ───────────────────────── Storage ─────────────────────────
+
+model StorageUsage {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalBytes     BigInt   @default(0)
+  mediaBytes     BigInt   @default(0)
+  exportBytes    BigInt   @default(0)
+  thumbnailBytes BigInt   @default(0)
+  updatedAt      DateTime @updatedAt
+}
+
+// ───────────────────────── System Config ─────────────────────────
+
+model SystemConfig {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       Json
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+// ───────────────────────── Assets / Taxonomy ─────────────────────────
+
+model AssetVersion {
+  id        String   @id @default(cuid())
+  assetId   String
+  assetType ContentType
+  version   Int      @default(1)
+  fileUrl   String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@unique([assetId, assetType, version])
+  @@index([assetId, assetType])
+  @@index([assetType, createdAt])
+}
+
+model AssetCategory {
+  id          String           @id @default(cuid())
+  name        String
+  slug        String           @unique
+  description String?
+  parentId    String?
+  parent      AssetCategory?   @relation("AssetCategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children    AssetCategory[]  @relation("AssetCategoryTree")
+  image       String?
+  sortOrder   Int              @default(0)
+  createdAt   DateTime         @default(now())
+
+  @@index([parentId])
+  @@index([sortOrder])
+}
+
+model AssetTag {
+  id         String   @id @default(cuid())
+  name       String
+  slug       String   @unique
+  usageCount Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@index([usageCount])
+}
+
+// ───────────────────────── Support ─────────────────────────
+
+model SupportTicket {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject    String
+  message    String
+  status     String   @default("open")
+  priority   String   @default("medium")
+  category   String   @default("general")
+  assignedTo String?
+  resolvedAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId, status])
+  @@index([status, priority])
+  @@index([assignedTo, status])
 }

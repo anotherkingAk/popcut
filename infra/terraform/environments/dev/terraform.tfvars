@@ -1,0 +1,33 @@
+environment             = "dev"
+region                  = "us-east-1"
+vpc_cidr                = "10.0.0.0/16"
+availability_zones      = ["us-east-1a"]
+public_subnet_cidrs     = ["10.0.1.0/24"]
+private_subnet_cidrs    = ["10.0.10.0/24"]
+database_subnet_cidrs   = ["10.0.20.0/24"]
+web_instance_type       = "t3.micro"
+backend_instance_type   = "t3.micro"
+ai_instance_type        = "t3.micro"
+database_instance_class = "db.t4g.micro"
+redis_instance_type     = "cache.t4g.micro"
+domain_name             = "dev.popcut.ai"
+certificate_arn         = ""
+web_desired_capacity    = 1
+web_max_size            = 2
+backend_desired_capacity = 1
+backend_max_size        = 2
+ai_desired_capacity     = 1
+ai_max_size             = 2
+multi_az                = false
+redis_num_shards        = 1
+redis_replicas_per_shard = 0
+backup_retention_period = 7
+deletion_protection     = false
+enable_flow_logs        = true
+enable_performance_insights = false
+
+tags = {
+  Project     = "PopCut"
+  Environment = "dev"
+  ManagedBy   = "Terraform"
+}

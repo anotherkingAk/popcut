@@ -1,0 +1,129 @@
+groups:
+  - name: popcut_api_alerts
+    interval: 30s
+    rules:
+      - alert: HighApiErrorRate
+        expr: |
+          (sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m]))) * 100 > 5
+        for: 2m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: 'High API error rate ({{ $value | humanizePercentage }})'
+          description: 'API error rate is {{ $value | humanizePercentage }} for the last 5 minutes, exceeding the 5% threshold.'
+          runbook_url: 'https://wiki.popcut.dev/runbooks/high-error-rate'
+
+      - alert: HighLatency
+        expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 0.5
+        for: 3m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: 'High API latency (p99 > 500ms)'
+          description: 'p99 latency is {{ $value }}s, exceeding the 500ms threshold.'
+          runbook_url: 'https://wiki.popcut.dev/runbooks/high-latency'
+
+      - alert: ServiceDown
+        expr: up == 0
+        for: 5m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: 'Service {{ $labels.instance }} is down'
+          description: '{{ $labels.instance }} has been unreachable for more than 5 minutes.'
+          runbook_url: 'https://wiki.popcut.dev/runbooks/service-down'
+
+  - name: popcut_infrastructure_alerts
+    interval: 30s
+    rules:
+      - alert: HighCpuUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: 'High CPU usage ({{ $value | humanizePercentage }})'
+          description: 'CPU usage is above 80% on {{ $labels.instance }} for more than 5 minutes.'
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: 'High memory usage ({{ $value | humanizePercentage }})'
+          description: 'Memory usage is above 85% on {{ $labels.instance }} for more than 5 minutes.'
+
+      - alert: DiskSpaceLow
+        expr: (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: 'Disk space low ({{ $value | humanizePercentage }})'
+          description: 'Disk usage is at {{ $value | humanizePercentage }} on {{ $labels.instance }}. Action required to free up space.'
+          runbook_url: 'https://wiki.popcut.dev/runbooks/disk-space'
+
+      - alert: DiskSpaceWarning
+        expr: (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100 > 80
+        for: 10m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: 'Disk space warning ({{ $value | humanizePercentage }})'
+          description: 'Disk usage is at {{ $value | humanizePercentage }} on {{ $labels.instance }}.'
+
+  - name: popcut_database_alerts
+    interval: 30s
+    rules:
+      - alert: PostgresHighConnections
+        expr: pg_stat_activity_count > 100
+        for: 2m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: 'High PostgreSQL connections ({{ $value }})'
+          description: 'PostgreSQL has {{ $value }} active connections, exceeding the 100 threshold.'
+          runbook_url: 'https://wiki.popcut.dev/runbooks/postgres-connections'
+
+      - alert: PostgresHighConnectionsCritical
+        expr: pg_stat_activity_count > 200
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: 'Critical PostgreSQL connections ({{ $value }})'
+          description: 'PostgreSQL has {{ $value }} active connections, exceeding the 200 critical threshold.'
+
+  - name: popcut_cache_alerts
+    interval: 30s
+    rules:
+      - alert: RedisHighMemoryUsage
+        expr: (redis_memory_used_bytes / redis_memory_max_bytes) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: 'Redis memory usage high ({{ $value | humanizePercentage }})'
+          description: 'Redis memory usage is at {{ $value | humanizePercentage }}, exceeding the 80% threshold.'
+          runbook_url: 'https://wiki.popcut.dev/runbooks/redis-memory'
+
+      - alert: RedisLowHitRate
+        expr: rate(redis_keyspace_hits_total[5m]) / (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m])) * 100 < 50
+        for: 10m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: 'Low Redis cache hit rate ({{ $value | humanizePercentage }})'
+          description: 'Redis cache hit rate dropped to {{ $value | humanizePercentage }}.'

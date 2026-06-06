@@ -1,0 +1,33 @@
+environment             = "prod"
+region                  = "us-east-1"
+vpc_cidr                = "10.2.0.0/16"
+availability_zones      = ["us-east-1a", "us-east-1b", "us-east-1c"]
+public_subnet_cidrs     = ["10.2.1.0/24", "10.2.2.0/24", "10.2.3.0/24"]
+private_subnet_cidrs    = ["10.2.10.0/24", "10.2.11.0/24", "10.2.12.0/24"]
+database_subnet_cidrs   = ["10.2.20.0/24", "10.2.21.0/24", "10.2.22.0/24"]
+web_instance_type       = "t3.large"
+backend_instance_type   = "t3.large"
+ai_instance_type        = "t3.large"
+database_instance_class = "db.r6g.large"
+redis_instance_type     = "cache.r6g.large"
+domain_name             = "popcut.ai"
+certificate_arn         = "arn:aws:acm:us-east-1:000000000000:certificate/placeholder"
+web_desired_capacity    = 3
+web_max_size            = 12
+backend_desired_capacity = 3
+backend_max_size        = 12
+ai_desired_capacity     = 3
+ai_max_size             = 12
+multi_az                = true
+redis_num_shards        = 3
+redis_replicas_per_shard = 1
+backup_retention_period = 35
+deletion_protection     = true
+enable_flow_logs        = true
+enable_performance_insights = true
+
+tags = {
+  Project     = "PopCut"
+  Environment = "prod"
+  ManagedBy   = "Terraform"
+}

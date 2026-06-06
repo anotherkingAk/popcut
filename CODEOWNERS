@@ -1,0 +1,33 @@
+# Global owners
+* @anotherkingAk
+
+# Backend
+/services/auth-service/ @anotherkingAk
+/services/export-service/ @anotherkingAk
+/services/media-service/ @anotherkingAk
+/services/project-service/ @anotherkingAk
+/services/template-service/ @anotherkingAk
+
+# AI Services
+/ai-services/ @anotherkingAk
+/services/ai-service/ @anotherkingAk
+
+# Web App
+/apps/web/ @anotherkingAk
+
+# Admin App
+/apps/admin/ @anotherkingAk
+
+# Mobile
+/apps/mobile/ @anotherkingAk
+
+# Packages
+/packages/ @anotherkingAk
+
+# Infrastructure
+/infra/ @anotherkingAk
+/.github/ @anotherkingAk
+/docker/ @anotherkingAk
+
+# Documentation
+/docs/ @anotherkingAk

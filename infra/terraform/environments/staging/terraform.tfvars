@@ -1,0 +1,33 @@
+environment             = "staging"
+region                  = "us-east-1"
+vpc_cidr                = "10.1.0.0/16"
+availability_zones      = ["us-east-1a", "us-east-1b"]
+public_subnet_cidrs     = ["10.1.1.0/24", "10.1.2.0/24"]
+private_subnet_cidrs    = ["10.1.10.0/24", "10.1.11.0/24"]
+database_subnet_cidrs   = ["10.1.20.0/24", "10.1.21.0/24"]
+web_instance_type       = "t3.medium"
+backend_instance_type   = "t3.medium"
+ai_instance_type        = "t3.medium"
+database_instance_class = "db.t3.medium"
+redis_instance_type     = "cache.t3.medium"
+domain_name             = "staging.popcut.ai"
+certificate_arn         = ""
+web_desired_capacity    = 2
+web_max_size            = 4
+backend_desired_capacity = 2
+backend_max_size        = 4
+ai_desired_capacity     = 2
+ai_max_size             = 4
+multi_az                = false
+redis_num_shards        = 1
+redis_replicas_per_shard = 1
+backup_retention_period = 14
+deletion_protection     = true
+enable_flow_logs        = true
+enable_performance_insights = true
+
+tags = {
+  Project     = "PopCut"
+  Environment = "staging"
+  ManagedBy   = "Terraform"
+}

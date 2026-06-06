@@ -1,0 +1,213 @@
+name: Deploy to Production
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: 22
+  PNPM_VERSION: 11
+  REGISTRY: ghcr.io
+
+jobs:
+  validate:
+    name: Validate Tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.check-tag.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check tag matches package.json
+        id: check-tag
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "v$PKG_VERSION" != "$TAG" ]; then
+            echo "::error::Tag $TAG does not match package.json version v$PKG_VERSION"
+            exit 1
+          fi
+          echo "version=${TAG#v}" >> $GITHUB_OUTPUT
+
+      - name: Verify tag is on main branch
+        run: |
+          git fetch origin main
+          if ! git merge-base --is-ancestor $GITHUB_SHA origin/main; then
+            echo "::error::Tag commit is not an ancestor of main branch"
+            exit 1
+          fi
+
+  build:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: validate
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      version: ${{ needs.validate.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & Push auth-service
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.auth-service
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository }}/auth-service:${{ needs.validate.outputs.version }}
+            ${{ env.REGISTRY }}/${{ github.repository }}/auth-service:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build & Push web
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.web
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository }}/web:${{ needs.validate.outputs.version }}
+            ${{ env.REGISTRY }}/${{ github.repository }}/web:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build & Push ai-service
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.ai-service
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository }}/ai-service:${{ needs.validate.outputs.version }}
+            ${{ env.REGISTRY }}/${{ github.repository }}/ai-service:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to Production EC2
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: build
+    environment:
+      name: production
+      url: https://popcut.app
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /opt/popcut
+            export TAG=${{ needs.build.outputs.version }}
+            docker compose pull
+            docker compose up -d --remove-orphans
+            docker image prune -f
+
+  smoke-test:
+    name: End-to-End Smoke Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: deploy
+    environment: production
+
+    steps:
+      - name: Check API health
+        run: |
+          curl --fail --retry 5 --retry-delay 10 --retry-max-time 60 \
+            -H "Authorization: Bearer ${{ secrets.SMOKE_TEST_TOKEN }}" \
+            -o /dev/null -s -w "%{http_code}" \
+            https://api.popcut.app/health
+
+      - name: Check Web app
+        run: |
+          curl --fail --retry 5 --retry-delay 10 --retry-max-time 60 \
+            -o /dev/null -s -w "%{http_code}" \
+            https://popcut.app
+
+      - name: Verify API status endpoint
+        run: |
+          STATUS=$(curl --fail --retry 3 --retry-delay 5 \
+            -o /dev/null -s -w "%{http_code}" \
+            https://api.popcut.app/v1/status)
+          if [ "$STATUS" -ne 200 ]; then
+            echo "::error::API status endpoint returned $STATUS"
+            exit 1
+          fi
+
+  notify:
+    name: Notify Slack
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [smoke-test]
+    if: always()
+
+    steps:
+      - name: Notify on success
+        if: success()
+        uses: slackapi/slack-github-action@v2
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "✅ Production deployment v${{ needs.build.outputs.version }} completed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "✅ *Production Deployment Complete*\nVersion: `v${{ needs.build.outputs.version }}`\nDeployed by: ${{ github.actor }}\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
+                  }
+                }
+              ]
+            }
+
+      - name: Notify on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v2
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "❌ Production deployment v${{ needs.build.outputs.version }} failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "❌ *Production Deployment Failed*\nVersion: `v${{ needs.build.outputs.version }}`\nFailed at: ${{ github.workflow }}\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow logs>"
+                  }
+                }
+              ]
+            }

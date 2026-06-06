@@ -1,0 +1,113 @@
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: 'smtp.example.com:587'
+  smtp_from: 'alerts@popcut.dev'
+  smtp_auth_username: 'alerts@popcut.dev'
+  smtp_auth_password: 'CHANGE_ME'
+  smtp_require_tls: true
+  slack_api_url: 'https://hooks.slack.com/services/CHANGE_ME'
+
+route:
+  receiver: 'default'
+  group_by: ['alertname', 'severity', 'team']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - receiver: 'critical'
+      match:
+        severity: critical
+      repeat_interval: 1h
+
+    - receiver: 'backend'
+      match:
+        team: backend
+      repeat_interval: 2h
+
+    - receiver: 'infrastructure'
+      match:
+        team: infrastructure
+      repeat_interval: 2h
+
+    - receiver: 'slack-general'
+      match_re:
+        severity: 'warning|critical'
+      continue: true
+
+receivers:
+  - name: 'default'
+    email_configs:
+      - to: 'dev-team@popcut.dev'
+        send_resolved: true
+        headers:
+          subject: '{{ .GroupLabels.alertname }} - {{ .Status | toUpper }}'
+    slack_configs:
+      - channel: '#alerts'
+        send_resolved: true
+        title: '{{ .GroupLabels.alertname }} - {{ .Status | toUpper }}'
+        text: |-
+          *Alert:* {{ .GroupLabels.alertname }}
+          *Severity:* {{ .Labels.severity }}
+          *Summary:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Graph:* <{{ .GeneratorURL }}|View in Prometheus>
+
+  - name: 'critical'
+    email_configs:
+      - to: 'oncall@popcut.dev'
+        send_resolved: true
+        headers:
+          subject: '[CRITICAL] {{ .GroupLabels.alertname }}'
+    slack_configs:
+      - channel: '#critical'
+        send_resolved: true
+        title: '[CRITICAL] {{ .GroupLabels.alertname }}'
+        text: |-
+          🔴 *Critical Alert:* {{ .GroupLabels.alertname }}
+          *Severity:* {{ .Labels.severity }}
+          *Summary:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Runbook:* {{ .Annotations.runbook_url }}
+
+  - name: 'backend'
+    slack_configs:
+      - channel: '#backend-alerts'
+        send_resolved: true
+        title: '{{ .GroupLabels.alertname }} - {{ .Status | toUpper }}'
+        text: |-
+          *Alert:* {{ .GroupLabels.alertname }}
+          *Service:* {{ .Labels.instance }}
+          *Summary:* {{ .Annotations.summary }}
+
+  - name: 'infrastructure'
+    slack_configs:
+      - channel: '#infra-alerts'
+        send_resolved: true
+        title: '{{ .GroupLabels.alertname }} - {{ .Status | toUpper }}'
+        text: |-
+          *Alert:* {{ .GroupLabels.alertname }}
+          *Instance:* {{ .Labels.instance }}
+          *Summary:* {{ .Annotations.summary }}
+
+  - name: 'slack-general'
+    slack_configs:
+      - channel: '#alerts'
+        send_resolved: true
+        title: '{{ .GroupLabels.alertname }} - {{ .Status | toUpper }}'
+        text: |-
+          *Alert:* {{ .GroupLabels.alertname }}
+          *Severity:* {{ .Labels.severity }}
+          *Summary:* {{ .Annotations.summary }}
+
+inhibit_rules:
+  - source_match:
+      severity: critical
+    target_match:
+      severity: warning
+    equal: ['alertname', 'instance']
+
+  - source_match:
+      severity: critical
+    target_match_re:
+      severity: 'warning|info'
+    equal: ['instance']

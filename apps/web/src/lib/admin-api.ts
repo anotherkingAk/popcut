@@ -1,366 +1,388 @@
-import type {
-  AdminUser, Project, Template, Effect, Filter, Font, AudioTrack,
-  Transition, ColorGrade, DashboardMetrics, AnalyticsData,
-  Subscription, CreditPackage, CreditTransaction, AuditLog,
-  FeatureFlag, AppSettings, AIGenerationJob, ContentStatus,
-  SubscriptionStatus, ExportRecord, PaginatedResponse,
-} from '@/types/admin'
+'use client'
 
-const delay = (ms: number) => new Promise(r => setTimeout(r, ms))
-async function mockRequest<T>(data: T, ms = 300): Promise<T> {
-  await delay(ms)
-  return data
-}
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4001'
 
-function generateMockArray<T>(count: number, factory: (i: number) => T): T[] {
-  return Array.from({ length: count }, (_, i) => factory(i))
-}
-
-const mockUser: AdminUser = {
-  id: '1', email: 'admin@popcut.com', name: 'Admin User',
-  avatar: null, role: 'owner', status: 'active', credits: 99999,
-  subscriptionTier: 'enterprise', projectsCount: 0, totalExports: 0,
-  storageUsed: 0, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2025-01-01T00:00:00Z',
-}
-
-export const adminApi = {
-  login: (email: string, password: string) =>
-    mockRequest({ token: 'mock-jwt-token', user: mockUser }),
-
-  getMe: () => mockRequest(mockUser),
-
-  getDashboardMetrics: (): Promise<DashboardMetrics> =>
-    mockRequest({
-      dau: 12453, mau: 89234, revenue: 45230, revenueChange: 12.5,
-      activeExports: 234, aiUsage: 1892, storageUsed: 2450,
-      totalUsers: 125430, newUsersToday: 342, totalProjects: 45672,
-    }),
-
-  getAnalyticsData: (period = '30d'): Promise<AnalyticsData> => {
-    const days = period === '7d' ? 7 : period === '90d' ? 90 : 30
-    const data = Array.from({ length: days }, (_, i) => ({
-      date: new Date(Date.now() - (days - i) * 86400000).toISOString().slice(0, 10),
-      value: Math.floor(Math.random() * 1000) + 500,
-    }))
-    return mockRequest({
-      dailyActiveUsers: data,
-      revenue: data.map(d => ({ ...d, value: Math.floor(Math.random() * 5000) + 1000 })),
-      userGrowth: data.map(d => ({ ...d, value: Math.floor(Math.random() * 200) + 50 })),
-      exports: data.map(d => ({ ...d, value: Math.floor(Math.random() * 300) + 100 })),
-      aiUsage: data.map(d => ({ ...d, value: Math.floor(Math.random() * 500) + 200 })),
-      storage: data.map(d => ({ ...d, value: Math.floor(Math.random() * 100) + 10 })),
-    })
-  },
-
-  getUsers: (page = 1, limit = 20): Promise<PaginatedResponse<AdminUser>> => {
-    const users = generateMockArray(50, i => ({
-      id: String(i + 1),
-      email: `user${i + 1}@example.com`,
-      name: i === 0 ? null : `User ${i + 1}`,
-      avatar: null,
-      role: (['owner', 'admin', 'moderator', 'support'] as const)[i % 4],
-      status: i % 7 === 0 ? 'suspended' as const : 'active' as const,
-      credits: Math.floor(Math.random() * 10000),
-      subscriptionTier: [null, 'free', 'pro', 'business', 'enterprise'][i % 5],
-      projectsCount: Math.floor(Math.random() * 50),
-      totalExports: Math.floor(Math.random() * 200),
-      storageUsed: Math.floor(Math.random() * 5000),
-      createdAt: new Date(Date.now() - Math.random() * 365 * 86400000).toISOString(),
-      updatedAt: new Date(Date.now() - Math.random() * 30 * 86400000).toISOString(),
-    }))
-    return mockRequest({
-      data: users.slice((page - 1) * limit, page * limit),
-      total: users.length, page, limit,
-      totalPages: Math.ceil(users.length / limit),
-    })
-  },
-
-  getUser: (id: string): Promise<AdminUser> => mockRequest({ ...mockUser, id }),
-  updateUser: (id: string, data: Partial<AdminUser>): Promise<AdminUser> =>
-    mockRequest({ ...mockUser, id, ...data }),
-  deleteUser: (id: string): Promise<void> => mockRequest(undefined),
-  suspendUser: (id: string): Promise<void> => mockRequest(undefined),
-  unsuspendUser: (id: string): Promise<void> => mockRequest(undefined),
-  assignCredits: (userId: string, amount: number): Promise<void> => mockRequest(undefined),
-
-  getUserExports: (userId: string): Promise<ExportRecord[]> =>
-    mockRequest(generateMockArray(10, i => ({
-      id: String(i + 1), userId, userName: `User ${userId}`,
-      projectId: String(Math.floor(Math.random() * 100)),
-      projectName: `Project ${i + 1}`,
-      format: ['mp4', 'mov', 'gif'][i % 3],
-      resolution: ['720p', '1080p', '4k'][i % 3],
-      duration: Math.floor(Math.random() * 300) + 10,
-      fileSize: Math.floor(Math.random() * 500) + 50,
-      status: (['completed', 'processing', 'failed', 'pending'] as const)[i % 4],
-      progress: i % 4 === 1 ? Math.floor(Math.random() * 100) : 100,
-      createdAt: new Date(Date.now() - Math.random() * 30 * 86400000).toISOString(),
-      completedAt: i % 4 === 0 ? new Date(Date.now() - Math.random() * 30 * 86400000).toISOString() : null,
-    }))),
-
-  getProjects: (page = 1, limit = 20): Promise<PaginatedResponse<Project>> => {
-    const projects = generateMockArray(50, i => ({
-      id: String(i + 1), name: `Project ${i + 1}`,
-      userId: String(Math.floor(Math.random() * 50) + 1),
-      userName: `User ${Math.floor(Math.random() * 50) + 1}`,
-      thumbnail: null, duration: Math.floor(Math.random() * 600) + 30,
-      status: (['draft', 'processing', 'completed'] as const)[i % 3],
-      templateId: i % 4 === 0 ? String(Math.floor(Math.random() * 20) + 1) : null,
-      exportsCount: Math.floor(Math.random() * 20),
-      createdAt: new Date(Date.now() - Math.random() * 90 * 86400000).toISOString(),
-      updatedAt: new Date(Date.now() - Math.random() * 30 * 86400000).toISOString(),
-    }))
-    return mockRequest({
-      data: projects.slice((page - 1) * limit, page * limit),
-      total: projects.length, page, limit,
-      totalPages: Math.ceil(projects.length / limit),
-    })
-  },
-
-  deleteProject: (id: string): Promise<void> => mockRequest(undefined),
-
-  getTemplates: (page = 1, limit = 20): Promise<PaginatedResponse<Template>> =>
-    mockRequest(generatePaginatedContent<Template>('Template', page, limit)),
-  getTemplate: (id: string): Promise<Template> => mockContentItem<Template>('Template', id),
-  createTemplate: (data: Partial<Template>): Promise<Template> => mockRequest({ id: String(Date.now()), ...data } as Template),
-  updateTemplate: (id: string, data: Partial<Template>): Promise<Template> =>
-    mockRequest({ id, name: 'Updated Template', ...data } as Template),
-  deleteTemplate: (id: string): Promise<void> => mockRequest(undefined),
-  publishTemplate: (id: string): Promise<void> => mockRequest(undefined),
-  unpublishTemplate: (id: string): Promise<void> => mockRequest(undefined),
-
-  getEffects: (page = 1, limit = 20): Promise<PaginatedResponse<Effect>> =>
-    mockRequest(generatePaginatedContent<Effect>('Effect', page, limit)),
-  getEffect: (id: string): Promise<Effect> => mockContentItem<Effect>('Effect', id),
-  createEffect: (data: Partial<Effect>): Promise<Effect> => mockRequest({ id: String(Date.now()), ...data } as Effect),
-  updateEffect: (id: string, data: Partial<Effect>): Promise<Effect> =>
-    mockRequest({ id, name: 'Updated Effect', ...data } as Effect),
-  deleteEffect: (id: string): Promise<void> => mockRequest(undefined),
-  publishEffect: (id: string): Promise<void> => mockRequest(undefined),
-  unpublishEffect: (id: string): Promise<void> => mockRequest(undefined),
-
-  getFilters: (page = 1, limit = 20): Promise<PaginatedResponse<Filter>> =>
-    mockRequest(generatePaginatedContent<Filter>('Filter', page, limit)),
-  getFilter: (id: string): Promise<Filter> => mockContentItem<Filter>('Filter', id),
-  createFilter: (data: Partial<Filter>): Promise<Filter> => mockRequest({ id: String(Date.now()), ...data } as Filter),
-  updateFilter: (id: string, data: Partial<Filter>): Promise<Filter> =>
-    mockRequest({ id, name: 'Updated Filter', ...data } as Filter),
-  deleteFilter: (id: string): Promise<void> => mockRequest(undefined),
-  publishFilter: (id: string): Promise<void> => mockRequest(undefined),
-  unpublishFilter: (id: string): Promise<void> => mockRequest(undefined),
-
-  getFonts: (page = 1, limit = 20): Promise<PaginatedResponse<Font>> =>
-    mockRequest(generatePaginatedContent<Font>('Font', page, limit)),
-  getFont: (id: string): Promise<Font> => mockContentItem<Font>('Font', id),
-  createFont: (data: Partial<Font>): Promise<Font> => mockRequest({ id: String(Date.now()), ...data } as Font),
-  updateFont: (id: string, data: Partial<Font>): Promise<Font> =>
-    mockRequest({ id, name: 'Updated Font', ...data } as Font),
-  deleteFont: (id: string): Promise<void> => mockRequest(undefined),
-  publishFont: (id: string): Promise<void> => mockRequest(undefined),
-  unpublishFont: (id: string): Promise<void> => mockRequest(undefined),
-
-  getAudio: (page = 1, limit = 20): Promise<PaginatedResponse<AudioTrack>> =>
-    mockRequest(generatePaginatedContent<AudioTrack>('Audio', page, limit)),
-  getAudioTrack: (id: string): Promise<AudioTrack> => mockContentItem<AudioTrack>('Audio', id),
-  createAudio: (data: Partial<AudioTrack>): Promise<AudioTrack> => mockRequest({ id: String(Date.now()), ...data } as AudioTrack),
-  updateAudio: (id: string, data: Partial<AudioTrack>): Promise<AudioTrack> =>
-    mockRequest({ id, name: 'Updated Audio', ...data } as AudioTrack),
-  deleteAudio: (id: string): Promise<void> => mockRequest(undefined),
-  publishAudio: (id: string): Promise<void> => mockRequest(undefined),
-  unpublishAudio: (id: string): Promise<void> => mockRequest(undefined),
-
-  getTransitions: (page = 1, limit = 20): Promise<PaginatedResponse<Transition>> =>
-    mockRequest(generatePaginatedContent<Transition>('Transition', page, limit)),
-  getTransition: (id: string): Promise<Transition> => mockContentItem<Transition>('Transition', id),
-  createTransition: (data: Partial<Transition>): Promise<Transition> => mockRequest({ id: String(Date.now()), ...data } as Transition),
-  updateTransition: (id: string, data: Partial<Transition>): Promise<Transition> =>
-    mockRequest({ id, name: 'Updated Transition', ...data } as Transition),
-  deleteTransition: (id: string): Promise<void> => mockRequest(undefined),
-  publishTransition: (id: string): Promise<void> => mockRequest(undefined),
-  unpublishTransition: (id: string): Promise<void> => mockRequest(undefined),
-
-  getColorGrades: (page = 1, limit = 20): Promise<PaginatedResponse<ColorGrade>> =>
-    mockRequest(generatePaginatedContent<ColorGrade>('ColorGrade', page, limit)),
-  getColorGrade: (id: string): Promise<ColorGrade> => mockContentItem<ColorGrade>('ColorGrade', id),
-  createColorGrade: (data: Partial<ColorGrade>): Promise<ColorGrade> => mockRequest({ id: String(Date.now()), ...data } as ColorGrade),
-  updateColorGrade: (id: string, data: Partial<ColorGrade>): Promise<ColorGrade> =>
-    mockRequest({ id, name: 'Updated Color Grade', ...data } as ColorGrade),
-  deleteColorGrade: (id: string): Promise<void> => mockRequest(undefined),
-  publishColorGrade: (id: string): Promise<void> => mockRequest(undefined),
-  unpublishColorGrade: (id: string): Promise<void> => mockRequest(undefined),
-
-  getSubscriptions: (page = 1, limit = 20): Promise<PaginatedResponse<Subscription>> => {
-    const subs = generateMockArray(30, i => ({
-      id: String(i + 1), userId: String(i + 1), userName: `User ${i + 1}`,
-      plan: ['free', 'pro', 'business', 'enterprise'][i % 4],
-      status: (['active', 'canceled', 'expired', 'trialing'] as SubscriptionStatus[])[i % 4],
-      price: [0, 19.99, 49.99, 99.99][i % 4],
-      interval: (['monthly', 'yearly'] as const)[i % 2],
-      currentPeriodStart: '2025-01-01T00:00:00Z',
-      currentPeriodEnd: '2025-02-01T00:00:00Z',
-      cancelAtPeriodEnd: i % 5 === 0,
-      createdAt: new Date(Date.now() - Math.random() * 90 * 86400000).toISOString(),
-    }))
-    return mockRequest({
-      data: subs.slice((page - 1) * limit, page * limit),
-      total: subs.length, page, limit,
-      totalPages: Math.ceil(subs.length / limit),
-    })
-  },
-
-  updateSubscription: (id: string, data: Partial<Subscription>): Promise<Subscription> =>
-    mockRequest({ id, plan: 'pro', status: 'active', price: 19.99, ...data } as Subscription),
-
-  cancelSubscription: (id: string): Promise<void> => mockRequest(undefined),
-
-  getCreditPackages: (): Promise<CreditPackage[]> =>
-    mockRequest([
-      { id: '1', name: 'Starter', credits: 100, price: 9.99, popular: false, active: true, createdAt: '2024-01-01T00:00:00Z' },
-      { id: '2', name: 'Popular', credits: 500, price: 39.99, popular: true, active: true, createdAt: '2024-01-01T00:00:00Z' },
-      { id: '3', name: 'Pro', credits: 2000, price: 129.99, popular: false, active: true, createdAt: '2024-01-01T00:00:00Z' },
-      { id: '4', name: 'Ultimate', credits: 10000, price: 499.99, popular: false, active: true, createdAt: '2024-01-01T00:00:00Z' },
-    ]),
-
-  createCreditPackage: (data: Partial<CreditPackage>): Promise<CreditPackage> =>
-    mockRequest({ id: String(Date.now()), ...data } as CreditPackage),
-
-  updateCreditPackage: (id: string, data: Partial<CreditPackage>): Promise<CreditPackage> =>
-    mockRequest({ id, ...data } as CreditPackage),
-
-  togglePackageActive: (id: string): Promise<void> => mockRequest(undefined),
-
-  getCreditTransactions: (page = 1, limit = 20): Promise<PaginatedResponse<CreditTransaction>> => {
-    const txs = generateMockArray(50, i => ({
-      id: String(i + 1), userId: String(Math.floor(Math.random() * 50) + 1),
-      userName: `User ${Math.floor(Math.random() * 50) + 1}`,
-      type: (['purchase', 'usage', 'refund', 'bonus'] as const)[i % 4],
-      amount: i % 2 === 0 ? Math.floor(Math.random() * 1000) + 100 : -(Math.floor(Math.random() * 500) + 10),
-      balance: Math.floor(Math.random() * 5000),
-      description: ['Credit purchase', 'Export usage', 'Refund', 'Welcome bonus'][i % 4],
-      createdAt: new Date(Date.now() - Math.random() * 30 * 86400000).toISOString(),
-    }))
-    return mockRequest({
-      data: txs.slice((page - 1) * limit, page * limit),
-      total: txs.length, page, limit,
-      totalPages: Math.ceil(txs.length / limit),
-    })
-  },
-
-  getAIGenerationJobs: (page = 1, limit = 20): Promise<PaginatedResponse<AIGenerationJob>> => {
-    const jobs = generateMockArray(20, i => ({
-      id: String(i + 1),
-      type: (['effect', 'template', 'transition', 'metadata'] as const)[i % 4],
-      input: { prompt: `Generate ${['effect', 'template', 'transition', 'metadata'][i % 4]}` },
-      output: i % 3 === 0 ? { id: 'gen_' + i, url: null } : null,
-      status: (['queued', 'processing', 'completed', 'failed'] as const)[i % 4],
-      progress: i % 4 === 1 ? Math.floor(Math.random() * 100) : i % 4 === 0 ? 0 : 100,
-      userId: String(Math.floor(Math.random() * 10) + 1),
-      userName: `Creator ${Math.floor(Math.random() * 10) + 1}`,
-      createdAt: new Date(Date.now() - Math.random() * 7 * 86400000).toISOString(),
-      completedAt: i % 4 === 2 ? new Date(Date.now() - Math.random() * 2 * 86400000).toISOString() : null,
-    }))
-    return mockRequest({
-      data: jobs.slice((page - 1) * limit, page * limit),
-      total: jobs.length, page, limit,
-      totalPages: Math.ceil(jobs.length / limit),
-    })
-  },
-
-  submitAIGeneration: (type: string, input: Record<string, unknown>): Promise<AIGenerationJob> =>
-    mockRequest({
-      id: String(Date.now()), type: type as AIGenerationJob['type'],
-      input, output: null, status: 'queued', progress: 0,
-      userId: '1', userName: 'Admin User',
-      createdAt: new Date().toISOString(), completedAt: null,
-    }),
-
-  reviewAIGeneration: (id: string, approved: boolean): Promise<void> => mockRequest(undefined),
-
-  getAuditLogs: (page = 1, limit = 20): Promise<PaginatedResponse<AuditLog>> => {
-    const logs = generateMockArray(100, i => ({
-      id: String(i + 1),
-      action: ['user.login', 'user.update', 'content.create', 'content.delete', 'settings.update', 'subscription.cancel'][i % 6],
-      entity: ['User', 'Template', 'Project', 'Settings', 'Subscription'][i % 5],
-      entityId: String(Math.floor(Math.random() * 100)),
-      userId: String(Math.floor(Math.random() * 10) + 1),
-      userName: `Admin ${Math.floor(Math.random() * 10) + 1}`,
-      details: { changed: ['name', 'status', 'credits'][i % 3] },
-      ip: `192.168.1.${Math.floor(Math.random() * 255)}`,
-      createdAt: new Date(Date.now() - Math.random() * 30 * 86400000).toISOString(),
-    }))
-    return mockRequest({
-      data: logs.slice((page - 1) * limit, page * limit),
-      total: logs.length, page, limit,
-      totalPages: Math.ceil(logs.length / limit),
-    })
-  },
-
-  getFeatureFlags: (): Promise<FeatureFlag[]> =>
-    mockRequest([
-      { id: '1', key: 'ai_effects', name: 'AI Effects', description: 'Enable AI-powered effects', enabled: true, percentage: 100, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2025-01-01T00:00:00Z' },
-      { id: '2', key: 'ai_templates', name: 'AI Templates', description: 'Enable AI template generation', enabled: true, percentage: 50, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2025-01-01T00:00:00Z' },
-      { id: '3', key: 'collaboration', name: 'Collaboration', description: 'Enable real-time collaboration', enabled: false, percentage: 0, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2025-01-01T00:00:00Z' },
-      { id: '4', key: 'cloud_rendering', name: 'Cloud Rendering', description: 'Enable cloud-based rendering', enabled: true, percentage: 75, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2025-01-01T00:00:00Z' },
-    ]),
-
-  createFeatureFlag: (data: Partial<FeatureFlag>): Promise<FeatureFlag> =>
-    mockRequest({ id: String(Date.now()), ...data } as FeatureFlag),
-
-  updateFeatureFlag: (id: string, data: Partial<FeatureFlag>): Promise<FeatureFlag> =>
-    mockRequest({ id, ...data } as FeatureFlag),
-
-  toggleFeatureFlag: (id: string): Promise<void> => mockRequest(undefined),
-
-  getAppSettings: (): Promise<AppSettings> =>
-    mockRequest({
-      maintenanceMode: false, maintenanceMessage: '',
-      forceUpdate: false, minimumAppVersion: '1.0.0',
-      latestAppVersion: '1.2.0', updateUrl: 'https://popcut.com/download',
-      maxUploadSize: 500, defaultCredits: 100, trialDays: 7,
-    }),
-
-  updateAppSettings: (data: Partial<AppSettings>): Promise<AppSettings> =>
-    mockRequest({
-      maintenanceMode: false, maintenanceMessage: '',
-      forceUpdate: false, minimumAppVersion: '1.0.0',
-      latestAppVersion: '1.2.0', updateUrl: 'https://popcut.com/download',
-      maxUploadSize: 500, defaultCredits: 100, trialDays: 7,
-      ...data,
-    }),
-
-  uploadAsset: (file: File): Promise<{ url: string }> =>
-    mockRequest({ url: 'https://cdn.popcut.com/uploads/' + file.name }),
-}
-
-function generatePaginatedContent<T>(name: string, page: number, limit: number): PaginatedResponse<T> {
-  const items = generateMockArray(30, i => ({
-    id: String(i + 1),
-    name: `${name} ${i + 1}`,
-    description: `Description for ${name.toLowerCase()} item ${i + 1}`,
-    category: ['popular', 'new', 'trending'][i % 3],
-    thumbnail: null, preview: null,
-    status: (['draft', 'published', 'archived'][i % 3] as ContentStatus),
-    version: Math.floor(Math.random() * 5) + 1,
-    author: `Creator ${(i % 10) + 1}`,
-    usageCount: Math.floor(Math.random() * 5000),
-    tags: ['trending', 'popular', 'new'],
-    createdAt: new Date(Date.now() - Math.random() * 90 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - Math.random() * 30 * 86400000).toISOString(),
-  })) as unknown as T[]
-  return {
-    data: items.slice((page - 1) * limit, page * limit),
-    total: items.length, page, limit,
-    totalPages: Math.ceil(items.length / limit),
+class AdminApiError extends Error {
+  status: number
+  code: string
+  constructor(message: string, status: number, code = 'UNKNOWN_ERROR') {
+    super(message)
+    this.name = 'AdminApiError'
+    this.status = status
+    this.code = code
   }
 }
 
-function mockContentItem<T>(name: string, id: string): Promise<T> {
-  const item = {
-    id, name: `${name} ${id}`, description: `A ${name.toLowerCase()} item`,
-    category: 'popular', thumbnail: null, preview: null,
-    status: 'published' as ContentStatus, version: 1, author: 'Creator',
-    usageCount: 500, tags: ['popular'],
-    createdAt: '2024-06-01T00:00:00Z', updatedAt: '2025-01-01T00:00:00Z',
-  } as unknown as T
-  return mockRequest(item)
+function getToken(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem('admin_token')
+}
+
+export function getStoredUser<T = unknown>(): T | null {
+  if (typeof window === 'undefined') return null
+  const raw = localStorage.getItem('admin_user')
+  return raw ? (JSON.parse(raw) as T) : null
+}
+
+async function request<T>(method: string, path: string, body?: unknown, opts?: { noAuth?: boolean }): Promise<T> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (!opts?.noAuth) {
+    const token = getToken()
+    if (token) headers.Authorization = `Bearer ${token}`
+  }
+
+  const res = await fetch(`${API_URL}/api/v1${path}`, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  })
+
+  if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem('admin_token')
+      localStorage.removeItem('admin_user')
+      if (typeof window !== 'undefined') {
+        window.location.href = '/admin/login'
+      }
+    }
+    const err = await res.json().catch(() => ({ message: res.statusText }))
+    throw new AdminApiError(
+      err.message || `Request failed with status ${res.status}`,
+      res.status,
+      err.code,
+    )
+  }
+
+  if (res.status === 204) return undefined as T
+  return res.json() as Promise<T>
+}
+
+function paginated<T>(method: string, path: string, page: number, limit: number, body?: unknown) {
+  const query = `?page=${page}&limit=${limit}`
+  if (body) return request<{ data: T[]; total: number; page: number; limit: number; totalPages: number }>(method, `${path}${query}`, body)
+  return request<{ data: T[]; total: number; page: number; limit: number; totalPages: number }>(method, `${path}${query}`)
+}
+
+interface LoginResponse {
+  accessToken: string
+  refreshToken: string
+}
+
+interface MeResponse {
+  id: string
+  email: string
+  name?: string
+  avatar?: string
+  role?: string
+  isActive?: boolean
+  credits?: number
+  createdAt?: string
+  updatedAt?: string
+}
+
+export const adminApi = {
+  login: async (email: string, password: string) => {
+    const tokens = await request<LoginResponse>('POST', '/auth/login', { email, password }, { noAuth: true })
+    localStorage.setItem('admin_token', tokens.accessToken)
+    const user = await request<MeResponse>('GET', '/auth/me')
+    const mapped = {
+      id: user.id,
+      email: user.email,
+      name: user.name || null,
+      avatar: user.avatar || null,
+      role: (user.role || 'admin').toLowerCase() as 'owner' | 'admin' | 'moderator' | 'support',
+      status: (user.isActive !== false ? 'active' : 'suspended') as 'active' | 'suspended',
+      credits: user.credits ?? 0,
+      subscriptionTier: null,
+      projectsCount: 0,
+      totalExports: 0,
+      storageUsed: 0,
+      createdAt: user.createdAt || new Date().toISOString(),
+      updatedAt: user.updatedAt || new Date().toISOString(),
+    }
+    localStorage.setItem('admin_user', JSON.stringify(mapped))
+    return { token: tokens.accessToken, user: mapped }
+  },
+
+  getMe: async () => {
+    const user = await request<MeResponse>('GET', '/auth/me')
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name || null,
+      avatar: user.avatar || null,
+      role: (user.role || 'admin').toLowerCase() as 'owner' | 'admin' | 'moderator' | 'support',
+      status: (user.isActive !== false ? 'active' : 'suspended') as 'active' | 'suspended',
+      credits: user.credits ?? 0,
+      subscriptionTier: null,
+      projectsCount: 0,
+      totalExports: 0,
+      storageUsed: 0,
+      createdAt: user.createdAt || new Date().toISOString(),
+      updatedAt: user.updatedAt || new Date().toISOString(),
+    }
+  },
+
+  getDashboardMetrics: () =>
+    request<{
+      dau: number; mau: number; revenue: number; revenueChange: number
+      activeExports: number; aiUsage: number; storageUsed: number
+      totalUsers: number; newUsersToday: number; totalProjects: number
+    }>('GET', '/admin/dashboard'),
+
+  getAnalyticsData: (period = '30d') =>
+    request<{
+      dailyActiveUsers: { date: string; value: number }[]
+      revenue: { date: string; value: number }[]
+      userGrowth: { date: string; value: number }[]
+      exports: { date: string; value: number }[]
+      aiUsage: { date: string; value: number }[]
+      storage: { date: string; value: number }[]
+    }>('GET', `/admin/analytics?period=${period}`),
+
+  getUsers: (page = 1, limit = 20) =>
+    paginated<import('@/types/admin').AdminUser>('GET', '/admin/users', page, limit),
+
+  getUser: (id: string) =>
+    request<import('@/types/admin').AdminUser>('GET', `/admin/users/${id}`),
+
+  updateUser: (id: string, data: Partial<import('@/types/admin').AdminUser>) =>
+    request<import('@/types/admin').AdminUser>('PUT', `/admin/users/${id}`, data),
+
+  deleteUser: (id: string) =>
+    request<void>('DELETE', `/admin/users/${id}`),
+
+  suspendUser: (id: string) =>
+    request<void>('PUT', `/admin/users/${id}/suspend`),
+
+  unsuspendUser: (id: string) =>
+    request<void>('PUT', `/admin/users/${id}/unsuspend`),
+
+  assignCredits: (userId: string, amount: number) =>
+    request<void>('POST', `/admin/users/${userId}/credits`, { amount }),
+
+  getUserExports: (userId: string) =>
+    request<import('@/types/admin').ExportRecord[]>('GET', `/admin/users/${userId}/exports`),
+
+  getProjects: (page = 1, limit = 20) =>
+    paginated<import('@/types/admin').Project>('GET', '/admin/projects', page, limit),
+
+  deleteProject: (id: string) =>
+    request<void>('DELETE', `/admin/projects/${id}`),
+
+  getTemplates: (page = 1, limit = 20) =>
+    paginated<import('@/types/admin').Template>('GET', '/admin/templates', page, limit),
+
+  getTemplate: (id: string) =>
+    request<import('@/types/admin').Template>('GET', `/admin/templates/${id}`),
+
+  createTemplate: (data: Partial<import('@/types/admin').Template>) =>
+    request<import('@/types/admin').Template>('POST', '/admin/templates', data),
+
+  updateTemplate: (id: string, data: Partial<import('@/types/admin').Template>) =>
+    request<import('@/types/admin').Template>('PUT', `/admin/templates/${id}`, data),
+
+  deleteTemplate: (id: string) =>
+    request<void>('DELETE', `/admin/templates/${id}`),
+
+  publishTemplate: (id: string) =>
+    request<void>('POST', `/admin/templates/${id}/publish`),
+
+  unpublishTemplate: (id: string) =>
+    request<void>('POST', `/admin/templates/${id}/unpublish`),
+
+  getEffects: (page = 1, limit = 20) =>
+    paginated<import('@/types/admin').Effect>('GET', '/admin/effects', page, limit),
+
+  getEffect: (id: string) =>
+    request<import('@/types/admin').Effect>('GET', `/admin/effects/${id}`),
+
+  createEffect: (data: Partial<import('@/types/admin').Effect>) =>
+    request<import('@/types/admin').Effect>('POST', '/admin/effects', data),
+
+  updateEffect: (id: string, data: Partial<import('@/types/admin').Effect>) =>
+    request<import('@/types/admin').Effect>('PUT', `/admin/effects/${id}`, data),
+
+  deleteEffect: (id: string) =>
+    request<void>('DELETE', `/admin/effects/${id}`),
+
+  publishEffect: (id: string) =>
+    request<void>('POST', `/admin/effects/${id}/publish`),
+
+  unpublishEffect: (id: string) =>
+    request<void>('POST', `/admin/effects/${id}/unpublish`),
+
+  getFilters: (page = 1, limit = 20) =>
+    paginated<import('@/types/admin').Filter>('GET', '/admin/filters', page, limit),
+
+  getFilter: (id: string) =>
+    request<import('@/types/admin').Filter>('GET', `/admin/filters/${id}`),
+
+  createFilter: (data: Partial<import('@/types/admin').Filter>) =>
+    request<import('@/types/admin').Filter>('POST', '/admin/filters', data),
+
+  updateFilter: (id: string, data: Partial<import('@/types/admin').Filter>) =>
+    request<import('@/types/admin').Filter>('PUT', `/admin/filters/${id}`, data),
+
+  deleteFilter: (id: string) =>
+    request<void>('DELETE', `/admin/filters/${id}`),
+
+  publishFilter: (id: string) =>
+    request<void>('POST', `/admin/filters/${id}/publish`),
+
+  unpublishFilter: (id: string) =>
+    request<void>('POST', `/admin/filters/${id}/unpublish`),
+
+  getFonts: (page = 1, limit = 20) =>
+    paginated<import('@/types/admin').Font>('GET', '/admin/fonts', page, limit),
+
+  getFont: (id: string) =>
+    request<import('@/types/admin').Font>('GET', `/admin/fonts/${id}`),
+
+  createFont: (data: Partial<import('@/types/admin').Font>) =>
+    request<import('@/types/admin').Font>('POST', '/admin/fonts', data),
+
+  updateFont: (id: string, data: Partial<import('@/types/admin').Font>) =>
+    request<import('@/types/admin').Font>('PUT', `/admin/fonts/${id}`, data),
+
+  deleteFont: (id: string) =>
+    request<void>('DELETE', `/admin/fonts/${id}`),
+
+  publishFont: (id: string) =>
+    request<void>('POST', `/admin/fonts/${id}/publish`),
+
+  unpublishFont: (id: string) =>
+    request<void>('POST', `/admin/fonts/${id}/unpublish`),
+
+  getAudio: (page = 1, limit = 20) =>
+    paginated<import('@/types/admin').AudioTrack>('GET', '/admin/audio', page, limit),
+
+  getAudioTrack: (id: string) =>
+    request<import('@/types/admin').AudioTrack>('GET', `/admin/audio/${id}`),
+
+  createAudio: (data: Partial<import('@/types/admin').AudioTrack>) =>
+    request<import('@/types/admin').AudioTrack>('POST', '/admin/audio', data),
+
+  updateAudio: (id: string, data: Partial<import('@/types/admin').AudioTrack>) =>
+    request<import('@/types/admin').AudioTrack>('PUT', `/admin/audio/${id}`, data),
+
+  deleteAudio: (id: string) =>
+    request<void>('DELETE', `/admin/audio/${id}`),
+
+  publishAudio: (id: string) =>
+    request<void>('POST', `/admin/audio/${id}/publish`),
+
+  unpublishAudio: (id: string) =>
+    request<void>('POST', `/admin/audio/${id}/unpublish`),
+
+  getTransitions: (page = 1, limit = 20) =>
+    paginated<import('@/types/admin').Transition>('GET', '/admin/transitions', page, limit),
+
+  getTransition: (id: string) =>
+    request<import('@/types/admin').Transition>('GET', `/admin/transitions/${id}`),
+
+  createTransition: (data: Partial<import('@/types/admin').Transition>) =>
+    request<import('@/types/admin').Transition>('POST', '/admin/transitions', data),
+
+  updateTransition: (id: string, data: Partial<import('@/types/admin').Transition>) =>
+    request<import('@/types/admin').Transition>('PUT', `/admin/transitions/${id}`, data),
+
+  deleteTransition: (id: string) =>
+    request<void>('DELETE', `/admin/transitions/${id}`),
+
+  publishTransition: (id: string) =>
+    request<void>('POST', `/admin/transitions/${id}/publish`),
+
+  unpublishTransition: (id: string) =>
+    request<void>('POST', `/admin/transitions/${id}/unpublish`),
+
+  getColorGrades: (page = 1, limit = 20) =>
+    paginated<import('@/types/admin').ColorGrade>('GET', '/admin/color-grades', page, limit),
+
+  getColorGrade: (id: string) =>
+    request<import('@/types/admin').ColorGrade>('GET', `/admin/color-grades/${id}`),
+
+  createColorGrade: (data: Partial<import('@/types/admin').ColorGrade>) =>
+    request<import('@/types/admin').ColorGrade>('POST', '/admin/color-grades', data),
+
+  updateColorGrade: (id: string, data: Partial<import('@/types/admin').ColorGrade>) =>
+    request<import('@/types/admin').ColorGrade>('PUT', `/admin/color-grades/${id}`, data),
+
+  deleteColorGrade: (id: string) =>
+    request<void>('DELETE', `/admin/color-grades/${id}`),
+
+  publishColorGrade: (id: string) =>
+    request<void>('POST', `/admin/color-grades/${id}/publish`),
+
+  unpublishColorGrade: (id: string) =>
+    request<void>('POST', `/admin/color-grades/${id}/unpublish`),
+
+  getSubscriptions: (page = 1, limit = 20) =>
+    paginated<import('@/types/admin').Subscription>('GET', '/admin/subscriptions', page, limit),
+
+  updateSubscription: (id: string, data: Partial<import('@/types/admin').Subscription>) =>
+    request<import('@/types/admin').Subscription>('PUT', `/admin/subscriptions/${id}`, data),
+
+  cancelSubscription: (id: string) =>
+    request<void>('POST', `/admin/subscriptions/${id}/cancel`),
+
+  getCreditPackages: () =>
+    request<import('@/types/admin').CreditPackage[]>('GET', '/admin/credit-packages'),
+
+  createCreditPackage: (data: Partial<import('@/types/admin').CreditPackage>) =>
+    request<import('@/types/admin').CreditPackage>('POST', '/admin/credit-packages', data),
+
+  updateCreditPackage: (id: string, data: Partial<import('@/types/admin').CreditPackage>) =>
+    request<import('@/types/admin').CreditPackage>('PUT', `/admin/credit-packages/${id}`, data),
+
+  togglePackageActive: (id: string) =>
+    request<void>('PATCH', `/admin/credit-packages/${id}/toggle`),
+
+  getCreditTransactions: (page = 1, limit = 20) =>
+    paginated<import('@/types/admin').CreditTransaction>('GET', '/admin/credit-transactions', page, limit),
+
+  getAIGenerationJobs: (page = 1, limit = 20) =>
+    paginated<import('@/types/admin').AIGenerationJob>('GET', '/admin/ai-jobs', page, limit),
+
+  submitAIGeneration: (type: string, input: Record<string, unknown>) =>
+    request<import('@/types/admin').AIGenerationJob>('POST', '/admin/ai-jobs', { type, input }),
+
+  reviewAIGeneration: (id: string, approved: boolean) =>
+    request<void>('POST', `/admin/ai-jobs/${id}/review`, { approved }),
+
+  getAuditLogs: (page = 1, limit = 20) =>
+    paginated<import('@/types/admin').AuditLog>('GET', '/admin/audit-logs', page, limit),
+
+  getFeatureFlags: () =>
+    request<import('@/types/admin').FeatureFlag[]>('GET', '/admin/feature-flags'),
+
+  createFeatureFlag: (data: Partial<import('@/types/admin').FeatureFlag>) =>
+    request<import('@/types/admin').FeatureFlag>('POST', '/admin/feature-flags', data),
+
+  updateFeatureFlag: (id: string, data: Partial<import('@/types/admin').FeatureFlag>) =>
+    request<import('@/types/admin').FeatureFlag>('PUT', `/admin/feature-flags/${id}`, data),
+
+  toggleFeatureFlag: (id: string) =>
+    request<void>('PATCH', `/admin/feature-flags/${id}/toggle`),
+
+  getAppSettings: () =>
+    request<import('@/types/admin').AppSettings>('GET', '/admin/settings'),
+
+  updateAppSettings: (data: Partial<import('@/types/admin').AppSettings>) =>
+    request<import('@/types/admin').AppSettings>('PUT', '/admin/settings', data),
+
+  uploadAsset: async (file: File) => {
+    const token = getToken()
+    const formData = new FormData()
+    formData.append('file', file)
+    const headers: Record<string, string> = {}
+    if (token) headers.Authorization = `Bearer ${token}`
+    const res = await fetch(`${API_URL}/api/v1/admin/assets/upload`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    })
+    if (!res.ok) throw new AdminApiError('Upload failed', res.status)
+    return res.json() as Promise<{ url: string }>
+  },
 }
