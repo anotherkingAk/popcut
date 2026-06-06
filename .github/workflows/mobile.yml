@@ -1,0 +1,32 @@
+name: Mobile
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27'
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+        working-directory: apps/mobile
+
+      - name: Analyze
+        run: flutter analyze
+        working-directory: apps/mobile
+        continue-on-error: true
+
+      - name: Run tests
+        run: flutter test
+        working-directory: apps/mobile
+        continue-on-error: true

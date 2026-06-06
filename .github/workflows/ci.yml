@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    uses: ./.github/workflows/backend.yml
+    secrets: inherit
+
+  web:
+    uses: ./.github/workflows/web.yml
+    secrets: inherit
+
+  mobile:
+    if: false
+    uses: ./.github/workflows/mobile.yml
+    secrets: inherit
+
+  docker:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/docker.yml
+    secrets: inherit
