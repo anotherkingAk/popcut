@@ -28,7 +28,7 @@ export default function EditorPage() {
     setEngine({ engine, isInitialized: true })
 
     return () => {
-      // cleanup
+      engine.destroy()
     }
   }, [setEngine])
 

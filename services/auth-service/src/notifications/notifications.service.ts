@@ -47,16 +47,29 @@ export class NotificationsService {
   }
 
   async broadcast(data: { type: string; title: string; body: string; data?: any }) {
-    const users = await this.prisma.user.findMany({ select: { id: true } })
-    await this.prisma.notification.createMany({
-      data: users.map(u => ({
-        userId: u.id,
-        type: data.type as any,
-        title: data.title,
-        body: data.body,
-        data: data.data,
-      })),
-    })
-    return { message: `Broadcast sent to ${users.length} users` }
+    let cursor: string | undefined
+    const batchSize = 1000
+    let total = 0
+    while (true) {
+      const users = await this.prisma.user.findMany({
+        take: batchSize,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+        select: { id: true },
+        orderBy: { id: 'asc' },
+      })
+      if (users.length === 0) break
+      await this.prisma.notification.createMany({
+        data: users.map(u => ({
+          userId: u.id,
+          type: data.type as any,
+          title: data.title,
+          body: data.body,
+          data: data.data,
+        })),
+      })
+      total += users.length
+      cursor = users[users.length - 1].id
+    }
+    return { message: `Broadcast sent to ${total} users` }
   }
 }

@@ -37,7 +37,14 @@ export class AdminService {
   }
 
   async getUser(id: string) {
-    const user = await this.prisma.user.findUnique({ where: { id } })
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true, email: true, name: true, avatar: true, role: true,
+        credits: true, isActive: true, planId: true, lastLoginAt: true,
+        createdAt: true, updatedAt: true, deletedAt: true,
+      },
+    })
     if (!user) throw new NotFoundException('User not found')
     return user
   }
@@ -77,7 +84,13 @@ export class AdminService {
   async listTemplates(page = 1, limit = 20) {
     const skip = (page - 1) * limit
     const [data, total] = await Promise.all([
-      this.prisma.template.findMany({ skip, take: limit, orderBy: { createdAt: 'desc' } }),
+      this.prisma.template.findMany({
+        skip, take: limit, orderBy: { createdAt: 'desc' },
+        select: {
+          id: true, name: true, thumbnail: true, category: true,
+          isPublic: true, isPremium: true, price: true, usageCount: true, createdAt: true,
+        },
+      }),
       this.prisma.template.count(),
     ])
     return { data, total, page, limit, totalPages: Math.ceil(total / limit) }
@@ -100,7 +113,13 @@ export class AdminService {
   async listEffects(page = 1, limit = 20) {
     const skip = (page - 1) * limit
     const [data, total] = await Promise.all([
-      this.prisma.effect.findMany({ skip, take: limit, orderBy: { createdAt: 'desc' } }),
+      this.prisma.effect.findMany({
+        skip, take: limit, orderBy: { createdAt: 'desc' },
+        select: {
+          id: true, name: true, thumbnail: true, type: true, category: true,
+          isPublic: true, isPremium: true, createdAt: true,
+        },
+      }),
       this.prisma.effect.count(),
     ])
     return { data, total, page, limit, totalPages: Math.ceil(total / limit) }
@@ -123,7 +142,13 @@ export class AdminService {
   async listFilters(page = 1, limit = 20) {
     const skip = (page - 1) * limit
     const [data, total] = await Promise.all([
-      this.prisma.filter.findMany({ skip, take: limit, orderBy: { createdAt: 'desc' } }),
+      this.prisma.filter.findMany({
+        skip, take: limit, orderBy: { createdAt: 'desc' },
+        select: {
+          id: true, name: true, thumbnail: true, category: true,
+          isPublic: true, isPremium: true, createdAt: true,
+        },
+      }),
       this.prisma.filter.count(),
     ])
     return { data, total, page, limit, totalPages: Math.ceil(total / limit) }
@@ -146,7 +171,13 @@ export class AdminService {
   async listFonts(page = 1, limit = 20) {
     const skip = (page - 1) * limit
     const [data, total] = await Promise.all([
-      this.prisma.font.findMany({ skip, take: limit, orderBy: { createdAt: 'desc' } }),
+      this.prisma.font.findMany({
+        skip, take: limit, orderBy: { createdAt: 'desc' },
+        select: {
+          id: true, name: true, family: true, category: true,
+          isPublic: true, isPremium: true, createdAt: true,
+        },
+      }),
       this.prisma.font.count(),
     ])
     return { data, total, page, limit, totalPages: Math.ceil(total / limit) }
@@ -169,7 +200,13 @@ export class AdminService {
   async listAudio(page = 1, limit = 20) {
     const skip = (page - 1) * limit
     const [data, total] = await Promise.all([
-      this.prisma.audio.findMany({ skip, take: limit, orderBy: { createdAt: 'desc' } }),
+      this.prisma.audio.findMany({
+        skip, take: limit, orderBy: { createdAt: 'desc' },
+        select: {
+          id: true, name: true, duration: true, category: true,
+          isPublic: true, isPremium: true, createdAt: true,
+        },
+      }),
       this.prisma.audio.count(),
     ])
     return { data, total, page, limit, totalPages: Math.ceil(total / limit) }

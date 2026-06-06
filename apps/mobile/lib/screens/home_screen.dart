@@ -27,19 +27,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AppProvider>();
     final projects = context.watch<ProjectService>();
-    final primary20 = AppColors.primary.withValues(alpha: 0.2);
-    final primary30 = AppColors.primary.withValues(alpha: 0.3);
-    final primary40 = AppColors.primary.withValues(alpha: 0.4);
-    final primary50 = AppColors.primary.withValues(alpha: 0.5);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
-            _buildAppBar(auth),
+            Selector<AppProvider, String?>(
+              selector: (_, a) => a.user?.displayName,
+              builder: (_, displayName, __) => _buildAppBar(displayName),
+            ),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -47,10 +45,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 8),
-                    Text('${_greeting()}, ${auth.user?.displayName ?? 'Creator'}',
-                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: Colors.white)),
-                    const Text('Ready to create?',
-                        style: TextStyle(fontSize: 14, color: AppColors.foregroundSecondary)),
+                    Selector<AppProvider, String?>(
+                      selector: (_, a) => a.user?.displayName,
+                      builder: (_, displayName, __) => Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('${_greeting()}, ${displayName ?? 'Creator'}',
+                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: Colors.white)),
+                          const Text('Ready to create?',
+                              style: TextStyle(fontSize: 14, color: AppColors.foregroundSecondary)),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 20),
                     _buildQuickActions(),
                     const SizedBox(height: 28),
@@ -73,19 +79,19 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildAppBar(AppProvider auth) {
+  Widget _buildAppBar(String? displayName) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
           IconButton(icon: const Icon(Icons.menu, color: Colors.white), onPressed: () { HapticService.trigger(HapticLevel.light); widget.onNavigate('/settings'); }),
-          const Text('CapCard', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Colors.white)),
+          const Text('PopCut', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Colors.white)),
           const Spacer(),
           CircleAvatar(
             radius: 20,
-            backgroundColor: primary40,
+            backgroundColor: AppColors.primary.withValues(alpha: 0.2),
             child: Text(
-              (auth.user?.displayName ?? 'U')[0].toUpperCase(),
+              (displayName ?? 'U')[0].toUpperCase(),
               style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600),
             ),
           ),
@@ -121,9 +127,9 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Container(
           height: 80,
           decoration: BoxDecoration(
-            color: isAccented ? primary40 : AppColors.surface,
+            color: isAccented ? AppColors.primary.withValues(alpha: 0.2) : AppColors.surface,
             borderRadius: BorderRadius.circular(14),
-            border: isAccented ? Border.all(color: primary50) : Border.all(color: AppColors.border),
+            border: isAccented ? Border.all(color: AppColors.primary.withValues(alpha: 0.3)) : Border.all(color: AppColors.border),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

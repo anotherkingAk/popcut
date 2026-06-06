@@ -1,11 +1,12 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_motion.dart';
 import '../../../models/project.dart';
 import '../../../services/haptic_service.dart';
 
-class TimelineZone extends StatelessWidget {
+class TimelineZone extends StatefulWidget {
   final List<TrackModel> tracks;
   final double totalDuration;
   final double playheadPosition;
@@ -43,60 +44,93 @@ class TimelineZone extends StatelessWidget {
   static void _noopString(String _) {}
   static void _noopTrackType(TrackType _) {}
 
+  @override
+  State<TimelineZone> createState() => _TimelineZoneState();
+}
+
+class _TimelineZoneState extends State<TimelineZone> {
+  final ScrollController _scrollController = ScrollController();
+  double _scrollOffset = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(() {
+      setState(() => _scrollOffset = _scrollController.offset);
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   static const _trackLabelWidth = 52.0;
   static const _pixelsPerSecond = 20.0;
 
-  double get _totalWidth => totalDuration * _pixelsPerSecond;
+  double get _totalWidth => widget.totalDuration * _pixelsPerSecond;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: AppColors.background,
-      child: Column(
-        children: [
-          _buildActionBar(),
-          _buildRuler(),
-          const Divider(height: 0.5, color: AppColors.border),
-          Expanded(
-            child: Row(
-              children: [
-                _buildTrackHeaders(),
-                Container(width: 0.5, color: AppColors.border),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: onCanvasTap,
-                    child: Stack(
-                      children: [
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: SizedBox(
-                            width: _totalWidth,
-                            child: Column(
-                              children: tracks.where((t) => t.visible).map((track) => _TrackRow(
-                                track: track,
-                                totalDuration: totalDuration,
-                                pixelsPerSecond: _pixelsPerSecond,
-                                isSelected: track.id == selectedTrackId,
-                                selectedClipId: selectedClipId,
-                                onClipTap: (clipId) => onClipTap(clipId, track.id),
-                              )).toList(),
+    return RepaintBoundary(
+      child: Container(
+        color: AppColors.background,
+        child: Column(
+          children: [
+            _buildActionBar(),
+            RepaintBoundary(
+              child: _buildRuler(),
+            ),
+            const Divider(height: 0.5, color: AppColors.border),
+            Expanded(
+              child: Row(
+                children: [
+                  _buildTrackHeaders(),
+                  Container(width: 0.5, color: AppColors.border),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: widget.onCanvasTap,
+                      child: Stack(
+                        children: [
+                          RepaintBoundary(
+                            child: SingleChildScrollView(
+                              controller: _scrollController,
+                              scrollDirection: Axis.horizontal,
+                              child: SizedBox(
+                                width: _totalWidth,
+                                child: Column(
+                                  children: widget.tracks.where((t) => t.visible).map((track) => _TrackRow(
+                                    track: track,
+                                    totalDuration: widget.totalDuration,
+                                    pixelsPerSecond: _pixelsPerSecond,
+                                    isSelected: track.id == widget.selectedTrackId,
+                                    selectedClipId: widget.selectedClipId,
+                                    onClipTap: (clipId) => widget.onClipTap(clipId, track.id),
+                                    scrollOffset: _scrollOffset,
+                                    viewportWidth: MediaQuery.of(context).size.width - _trackLabelWidth,
+                                  )).toList(),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                        _PlayheadAssembly(
-                          position: playheadPosition,
-                          totalDuration: totalDuration,
-                          totalWidth: _totalWidth,
-                          onChanged: onPlayheadChanged,
-                        ),
-                      ],
+                          RepaintBoundary(
+                            child: _PlayheadAssembly(
+                              position: widget.playheadPosition,
+                              totalDuration: widget.totalDuration,
+                              totalWidth: _totalWidth,
+                              onChanged: widget.onPlayheadChanged,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -111,21 +145,22 @@ class TimelineZone extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _actionBtn(Icons.content_cut, 'Split', onSplit, enabled: selectedClipId != null),
+          _actionBtn(Icons.content_cut, 'Split', widget.onSplit, enabled: widget.selectedClipId != null),
           const SizedBox(width: 4),
-          _actionBtn(Icons.delete_outline, 'Delete', onDelete, enabled: selectedClipId != null),
+          _actionBtn(Icons.delete_outline, 'Delete', widget.onDelete, enabled: widget.selectedClipId != null),
           const Spacer(),
-          _actionBtn(Icons.add, 'Add Video', () => onAddTrack(TrackType.video), enabled: true),
+          _actionBtn(Icons.add, 'Add Video', () => widget.onAddTrack(TrackType.video), enabled: true),
           const SizedBox(width: 2),
-          _actionBtn(Icons.audiotrack, 'Add Audio', () => onAddTrack(TrackType.audio), enabled: true),
+          _actionBtn(Icons.audiotrack, 'Add Audio', () => widget.onAddTrack(TrackType.audio), enabled: true),
           const SizedBox(width: 2),
-          _actionBtn(Icons.text_fields, 'Add Text', () => onAddTrack(TrackType.text), enabled: true),
+          _actionBtn(Icons.text_fields, 'Add Text', () => widget.onAddTrack(TrackType.text), enabled: true),
         ],
       ),
     );
   }
 
   Widget _actionBtn(IconData icon, String tooltip, VoidCallback onTap, {required bool enabled}) {
+    final color = enabled ? AppColors.foregroundSecondary : AppColors.foregroundMuted.withValues(alpha: 0.3);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -133,7 +168,7 @@ class TimelineZone extends StatelessWidget {
         onTap: enabled ? () { HapticService.trigger(HapticLevel.light); onTap(); } : null,
         child: Container(
           width: 28, height: 28,
-          child: Icon(icon, size: 14, color: enabled ? AppColors.foregroundSecondary : AppColors.foregroundMuted.withValues(alpha: 0.3)),
+          child: Icon(icon, size: 14, color: color),
         ),
       ),
     );
@@ -145,7 +180,7 @@ class TimelineZone extends StatelessWidget {
       color: AppColors.panelBg,
       padding: const EdgeInsets.only(left: _trackLabelWidth),
       child: CustomPaint(
-        painter: _RulerPainter(totalDuration: totalDuration, pixelsPerSecond: _pixelsPerSecond),
+        painter: _RulerPainter(totalDuration: widget.totalDuration, pixelsPerSecond: _pixelsPerSecond),
         size: const Size(double.infinity, 22),
       ),
     );
@@ -156,11 +191,11 @@ class TimelineZone extends StatelessWidget {
       width: _trackLabelWidth,
       color: AppColors.surface,
       child: Column(
-        children: tracks.where((t) => t.visible).map((track) => _TrackHeader(
+        children: widget.tracks.where((t) => t.visible).map((track) => _TrackHeader(
           track: track,
-          isActive: track.id == selectedTrackId,
-          onToggleVisibility: () => onToggleVisibility(track.id),
-          onToggleLock: () => onToggleLock(track.id),
+          isActive: track.id == widget.selectedTrackId,
+          onToggleVisibility: () => widget.onToggleVisibility(track.id),
+          onToggleLock: () => widget.onToggleLock(track.id),
         )).toList(),
       ),
     );
@@ -174,6 +209,8 @@ class _TrackRow extends StatelessWidget {
   final bool isSelected;
   final String? selectedClipId;
   final void Function(String clipId) onClipTap;
+  final double scrollOffset;
+  final double viewportWidth;
 
   const _TrackRow({
     required this.track,
@@ -182,11 +219,22 @@ class _TrackRow extends StatelessWidget {
     required this.isSelected,
     required this.selectedClipId,
     required this.onClipTap,
+    this.scrollOffset = 0,
+    this.viewportWidth = 400,
   });
 
   @override
   Widget build(BuildContext context) {
     final typeColor = _trackColor(track.type);
+    final visibleStart = scrollOffset - 20;
+    final visibleEnd = scrollOffset + viewportWidth + 20;
+
+    final visibleClips = track.clips.where((clip) {
+      final clipStart = clip.start * pixelsPerSecond;
+      final clipEnd = clip.end * pixelsPerSecond;
+      return clipEnd >= visibleStart && clipStart <= visibleEnd;
+    }).toList();
+
     return Container(
       height: _trackHeight(track.type),
       decoration: BoxDecoration(
@@ -202,7 +250,7 @@ class _TrackRow extends StatelessWidget {
             painter: _GridPainter(totalDuration: totalDuration, pixelsPerSecond: pixelsPerSecond),
             size: Size(double.infinity, _trackHeight(track.type)),
           ),
-          ...track.clips.map((clip) => Positioned(
+          ...visibleClips.map((clip) => Positioned(
             left: clip.start * pixelsPerSecond,
             width: (clip.end - clip.start) * pixelsPerSecond,
             top: 3,
@@ -442,8 +490,19 @@ class _RulerPainter extends CustomPainter {
   final double pixelsPerSecond;
   _RulerPainter({required this.totalDuration, required this.pixelsPerSecond});
 
+  ui.Picture? _cachedPicture;
+  double _cachedDuration = -1;
+  double _cachedPixelsPerSecond = -1;
+
   @override
   void paint(Canvas canvas, Size size) {
+    if (_cachedPicture != null && _cachedDuration == totalDuration && _cachedPixelsPerSecond == pixelsPerSecond) {
+      canvas.drawPicture(_cachedPicture!);
+      return;
+    }
+
+    final pictureRecorder = ui.PictureRecorder();
+    final pictureCanvas = Canvas(pictureRecorder);
     final paint = Paint()..color = AppColors.borderLight..strokeWidth = 0.5;
     final txt = TextPainter(textDirection: TextDirection.ltr);
 
@@ -453,16 +512,21 @@ class _RulerPainter extends CustomPainter {
       final isMinor = i % 1 == 0;
 
       if (isMajor) {
-        canvas.drawLine(Offset(x, 12), Offset(x, size.height), paint);
+        pictureCanvas.drawLine(Offset(x, 12), Offset(x, size.height), paint);
         txt.text = TextSpan(text: '${i.toInt()}s', style: const TextStyle(color: AppColors.foregroundMuted, fontSize: 9));
         txt.layout();
-        txt.paint(canvas, Offset(x - txt.width / 2, 2));
+        txt.paint(pictureCanvas, Offset(x - txt.width / 2, 2));
       } else if (isMinor) {
-        canvas.drawLine(Offset(x, 16), Offset(x, size.height), paint);
+        pictureCanvas.drawLine(Offset(x, 16), Offset(x, size.height), paint);
       } else {
-        canvas.drawLine(Offset(x, 18), Offset(x, size.height), Paint()..color = AppColors.borderLight.withValues(alpha: 0.3)..strokeWidth = 0.5);
+        pictureCanvas.drawLine(Offset(x, 18), Offset(x, size.height), Paint()..color = AppColors.borderLight.withValues(alpha: 0.3)..strokeWidth = 0.5);
       }
     }
+
+    _cachedPicture = pictureRecorder.endRecording();
+    _cachedDuration = totalDuration;
+    _cachedPixelsPerSecond = pixelsPerSecond;
+    canvas.drawPicture(_cachedPicture!);
   }
 
   @override
@@ -484,7 +548,7 @@ class _GridPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _GridPainter old) => old.totalDuration != totalDuration;
+  bool shouldRepaint(covariant _GridPainter old) => old.totalDuration != totalDuration || old.pixelsPerSecond != pixelsPerSecond;
 }
 
 class _Waveform extends StatelessWidget {

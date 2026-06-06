@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Upload, Image, Music, FileVideo, Search } from 'lucide-react'
 
@@ -9,6 +10,22 @@ const mediaItems = [
   { id: 'm3', name: 'logo.png', type: 'image' },
   { id: 'm4', name: 'overlay.mov', type: 'video', duration: '00:12' },
 ]
+
+const MediaItem = React.memo(({ item }: { item: typeof mediaItems[0] }) => (
+  <div className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-surface-hover cursor-pointer transition-colors group">
+    <div className="w-10 h-10 rounded-md bg-surface-hover flex items-center justify-center shrink-0">
+      {item.type === 'video' && <FileVideo className="w-4 h-4 text-primary" />}
+      {item.type === 'audio' && <Music className="w-4 h-4 text-accent" />}
+      {item.type === 'image' && <Image className="w-4 h-4 text-success" />}
+    </div>
+    <div className="min-w-0">
+      <p className="text-xs text-text truncate">{item.name}</p>
+      {item.duration && (
+        <p className="text-[10px] text-text-muted">{item.duration}</p>
+      )}
+    </div>
+  </div>
+))
 
 export function MediaPanel() {
   return (
@@ -47,22 +64,7 @@ export function MediaPanel() {
 
       <div className="flex-1 overflow-y-auto px-2 space-y-1 scrollbar-thin">
         {mediaItems.map((item) => (
-          <div
-            key={item.id}
-            className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-surface-hover cursor-pointer transition-colors group"
-          >
-            <div className="w-10 h-10 rounded-md bg-surface-hover flex items-center justify-center shrink-0">
-              {item.type === 'video' && <FileVideo className="w-4 h-4 text-primary" />}
-              {item.type === 'audio' && <Music className="w-4 h-4 text-accent" />}
-              {item.type === 'image' && <Image className="w-4 h-4 text-success" />}
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs text-text truncate">{item.name}</p>
-              {item.duration && (
-                <p className="text-[10px] text-text-muted">{item.duration}</p>
-              )}
-            </div>
-          </div>
+          <MediaItem key={item.id} item={item} />
         ))}
       </div>
     </div>

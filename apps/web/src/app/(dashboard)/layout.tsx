@@ -1,3 +1,4 @@
+import ReactDOM from 'react-dom'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { TopBar } from '@/components/layout/TopBar'
 
@@ -6,6 +7,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
+  ReactDOM.preload('/editor', { as: 'document' })
   return (
     <div className="flex">
       <Sidebar />

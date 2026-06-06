@@ -58,7 +58,7 @@ class AuthService extends ChangeNotifier {
         try {
           await _auth.signInWithCredential(credential);
         } catch (e) {
-          debugPrint('Auto-verification failed: $e');
+          // Auto-verification failed silently
         }
       },
       verificationFailed: (e) {

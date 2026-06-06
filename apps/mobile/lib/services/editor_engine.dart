@@ -21,6 +21,8 @@ class EditorEngine extends ChangeNotifier {
   ToolType? get activeTool => _activeTool;
 
   Timer? _playbackTimer;
+  DateTime? _playStartTime;
+  double _playStartTimeOffset = 0;
 
   void loadProject(Project project) {
     _totalDuration = project.duration.inSeconds.toDouble();
@@ -55,16 +57,14 @@ class EditorEngine extends ChangeNotifier {
     }
   }
 
-  DateTime? _playStartTime;
-
   void play() {
     if (_currentTime >= _totalDuration) _currentTime = 0;
     _isPlaying = true;
     _playStartTime = DateTime.now();
+    _playStartTimeOffset = _currentTime;
     _playbackTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
       final elapsed = DateTime.now().difference(_playStartTime!).inMilliseconds / 1000;
-      _currentTime = (_currentTime + elapsed).clamp(0, _totalDuration);
-      _playStartTime = DateTime.now();
+      _currentTime = (_playStartTimeOffset + elapsed).clamp(0, _totalDuration);
       if (_currentTime >= _totalDuration) {
         _currentTime = _totalDuration;
         pause();
@@ -129,6 +129,20 @@ class EditorEngine extends ChangeNotifier {
     notifyListeners();
   }
 
+  void undoLastSplit() {
+    if (_selectedClipId == null || _selectedTrackId == null) return;
+    final track = tracks.where((t) => t.id == _selectedTrackId).firstOrNull;
+    if (track == null) return;
+    final splitClipIdx = track.clips.indexWhere((c) => c.id == _selectedClipId);
+    if (splitClipIdx <= 0) return;
+    final splitClip = track.clips[splitClipIdx];
+    if (!splitClip.id.endsWith('_split')) return;
+    final prevClip = track.clips[splitClipIdx - 1];
+    prevClip.end = splitClip.end;
+    track.clips.removeAt(splitClipIdx);
+    notifyListeners();
+  }
+
   void deleteClip() {
     if (_selectedClipId == null || _selectedTrackId == null) return;
     final track = tracks.where((t) => t.id == _selectedTrackId).firstOrNull;
@@ -156,6 +170,13 @@ class EditorEngine extends ChangeNotifier {
     notifyListeners();
   }
 
+  void removeLastTrack() {
+    if (tracks.isNotEmpty) {
+      tracks.removeLast();
+      notifyListeners();
+    }
+  }
+
   void toggleTrackVisibility(String id) {
     final track = tracks.where((t) => t.id == id).firstOrNull;
     if (track != null) {
@@ -168,6 +189,60 @@ class EditorEngine extends ChangeNotifier {
     final track = tracks.where((t) => t.id == id).firstOrNull;
     if (track != null) {
       track.locked = !track.locked;
+      notifyListeners();
+    }
+  }
+
+  void moveClip(String clipId, String toTrackId, double toTime) {
+    String? fromTrackId;
+    int clipIndex = -1;
+    ClipModel? clip;
+
+    for (final track in tracks) {
+      final idx = track.clips.indexWhere((c) => c.id == clipId);
+      if (idx >= 0) {
+        fromTrackId = track.id;
+        clipIndex = idx;
+        clip = track.clips[idx];
+        break;
+      }
+    }
+
+    if (clip == null || fromTrackId == null) return;
+
+    final fromTrack = tracks.where((t) => t.id == fromTrackId).first;
+    fromTrack.clips.removeAt(clipIndex);
+
+    final toTrack = tracks.where((t) => t.id == toTrackId).first;
+    clip.start = toTime;
+    clip.end = toTime + (clip.end - clip.start);
+    toTrack.clips.add(clip);
+    notifyListeners();
+  }
+
+  void setClipProperty(String clipId, String property, dynamic value) {
+    for (final track in tracks) {
+      for (final clip in track.clips) {
+        if (clip.id == clipId) {
+          switch (property) {
+            case 'start':
+              clip.start = (value as num).toDouble();
+              break;
+            case 'end':
+              clip.end = (value as num).toDouble();
+              break;
+          }
+          notifyListeners();
+          return;
+        }
+      }
+    }
+  }
+
+  void restoreClip(ClipModel clip, String trackId, int index) {
+    final track = tracks.where((t) => t.id == trackId).firstOrNull;
+    if (track != null) {
+      track.clips.insert(index, clip);
       notifyListeners();
     }
   }

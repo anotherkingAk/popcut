@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -24,6 +25,7 @@ class _OtpScreenState extends State<OtpScreen> {
   bool _isVerifying = false;
   int _resendTime = 60;
   bool _canResend = false;
+  Timer? _resendTimer;
 
   AuthService get _auth => context.read<AppProvider>().auth;
 
@@ -36,6 +38,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
   @override
   void dispose() {
+    _resendTimer?.cancel();
     for (final c in _codes) c.dispose();
     for (final f in _focusNodes) f.dispose();
     super.dispose();
@@ -44,15 +47,17 @@ class _OtpScreenState extends State<OtpScreen> {
   void _startResendTimer() {
     _canResend = false;
     _resendTime = 60;
-    Future.doWhile(() async {
-      await Future.delayed(const Duration(seconds: 1));
-      if (!mounted) return false;
+    _resendTimer?.cancel();
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
       setState(() => _resendTime--);
       if (_resendTime <= 0) {
+        timer.cancel();
         setState(() => _canResend = true);
-        return false;
       }
-      return true;
     });
   }
 

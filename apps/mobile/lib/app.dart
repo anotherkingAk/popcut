@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'theme/app_theme.dart';
 import 'providers/app_provider.dart';
 import 'screens/splash_screen.dart';
 import 'screens/onboarding_screen.dart';
@@ -24,129 +25,156 @@ import 'screens/admin/admin_effects_screen.dart';
 import 'screens/admin/admin_content_screen.dart';
 import 'screens/admin/admin_analytics_screen.dart';
 
-class AppRouter extends StatefulWidget {
+class AppRouter extends StatelessWidget {
   const AppRouter({super.key});
 
   @override
-  State<AppRouter> createState() => _AppRouterState();
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'PopCut',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.dark,
+      initialRoute: '/splash',
+      onGenerateRoute: _onGenerateRoute,
+      navigatorObservers: [_RouteObserver()],
+    );
+  }
 }
 
-class _AppRouterState extends State<AppRouter> {
-  String _currentRoute = '/splash';
-  final _navStack = <String>['/splash'];
-  String _pendingPhone = '';
-  String _pendingVerId = '';
-  Map<String, dynamic> _routeArgs = {};
+Route<dynamic>? _onGenerateRoute(RouteSettings settings) {
+  final args = settings.arguments is Map<String, dynamic>
+      ? settings.arguments as Map<String, dynamic>
+      : <String, dynamic>{};
 
-  void _navigate(String route, {bool replace = false, Map<String, dynamic>? args}) {
-    setState(() {
-      if (replace) _navStack.clear();
-      _currentRoute = route;
-      _navStack.add(route);
-      if (args != null) _routeArgs = args;
-    });
-  }
+  return MaterialPageRoute<void>(
+    settings: settings,
+    builder: (context) {
+      switch (settings.name) {
+        case '/splash':
+          return SplashScreen(
+            onComplete: () {
+              final auth = context.read<AppProvider>();
+              Navigator.of(context).pushReplacementNamed(auth.isLoggedIn ? '/home' : '/onboarding');
+            },
+          );
+        case '/onboarding':
+          return OnboardingScreen(
+            onComplete: () => Navigator.of(context).pushReplacementNamed('/login'),
+          );
+        case '/login':
+          return LoginScreen(
+            onSignup: () => Navigator.of(context).pushNamed('/signup'),
+            onForgotPassword: () => Navigator.of(context).pushNamed('/forgot-password'),
+            onOtp: (phone, verId) => Navigator.of(context).pushNamed('/otp', arguments: {'phone': phone, 'verId': verId}),
+            onSuccess: () => Navigator.of(context).pushReplacementNamed('/home'),
+          );
+        case '/forgot-password':
+          return ForgotPasswordScreen(
+            onBack: () => Navigator.of(context).pop(),
+          );
+        case '/signup':
+          return SignupScreen(
+            onLogin: () => Navigator.of(context).pop(),
+            onOtp: (phone, verId) => Navigator.of(context).pushNamed('/otp', arguments: {'phone': phone, 'verId': verId}),
+          );
+        case '/otp':
+          return OtpScreen(
+            phone: args['phone'] as String? ?? '',
+            verificationId: args['verId'] as String? ?? '',
+            onSuccess: () => Navigator.of(context).pushReplacementNamed('/home'),
+          );
+        case '/home':
+          return HomeScreen(
+            onNavigate: (route, {args}) => Navigator.of(context).pushNamed(route, arguments: args),
+          );
+        case '/projects':
+          return ProjectsScreen(
+            onBack: () => Navigator.of(context).pop(),
+            onNavigate: (route, {args}) => Navigator.of(context).pushNamed(route, arguments: args),
+          );
+        case '/editor':
+          return EditorScreen(
+            projectId: args['projectId'] as String?,
+            onBack: () => Navigator.of(context).pop(),
+            onExport: (projectId) => Navigator.of(context).pushNamed('/export', arguments: {'projectId': projectId}),
+          );
+        case '/templates':
+          return TemplatesScreen(
+            onBack: () => Navigator.of(context).pop(),
+            onNavigate: (route, {args}) => Navigator.of(context).pushNamed(route, arguments: args),
+          );
+        case '/template-detail':
+          return TemplateDetailScreen(
+            templateId: args['templateId'] as String? ?? '1',
+            templateName: args['templateName'] as String? ?? 'Wedding Highlights',
+            onBack: () => Navigator.of(context).pop(),
+            onNavigate: (route, {args}) => Navigator.of(context).pushNamed(route, arguments: args),
+          );
+        case '/ai-studio':
+          return AiStudioScreen(
+            onBack: () => Navigator.of(context).pop(),
+          );
+        case '/export':
+          return ExportScreen(
+            projectId: args['projectId'] as String?,
+            onBack: () => Navigator.of(context).pop(),
+            onNavigate: (route) => Navigator.of(context).pushNamed(route),
+          );
+        case '/settings':
+          return SettingsScreen(
+            onBack: () => Navigator.of(context).pop(),
+            onNavigate: (route) => Navigator.of(context).pushNamed(route),
+          );
+        case '/subscription':
+          return SubscriptionScreen(
+            onBack: () => Navigator.of(context).pop(),
+          );
+        case '/privacy':
+          return PrivacyScreen(
+            onBack: () => Navigator.of(context).pop(),
+            onNavigate: (route, {args}) => Navigator.of(context).pushNamed(route, arguments: args),
+          );
+        case '/delete-account':
+          return DeleteAccountScreen(
+            onBack: () => Navigator.of(context).pop(),
+            onNavigate: (route, {args}) => Navigator.of(context).pushNamed(route, arguments: args),
+          );
+        case '/admin':
+          return AdminDashboard(
+            onNavigate: (route) => Navigator.of(context).pushNamed(route),
+            onBack: () => Navigator.of(context).pop(),
+          );
+        case '/admin/users':
+          return AdminUsersScreen(
+            onBack: () => Navigator.of(context).pop(),
+          );
+        case '/admin/effects':
+          return AdminEffectsScreen(
+            onBack: () => Navigator.of(context).pop(),
+          );
+        case '/admin/content':
+          return AdminContentScreen(
+            onBack: () => Navigator.of(context).pop(),
+          );
+        case '/admin/analytics':
+          return AdminAnalyticsScreen(
+            onBack: () => Navigator.of(context).pop(),
+          );
+        default:
+          return Scaffold(body: Center(child: Text('Route not found: ${settings.name}', style: const TextStyle(color: Colors.white))));
+      }
+    },
+  );
+}
 
-  void _goBack() {
-    if (_navStack.length > 1) {
-      setState(() {
-        _navStack.removeLast();
-        _currentRoute = _navStack.last;
-      });
-    }
+class _RouteObserver extends NavigatorObserver {
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didPush(route, previousRoute);
   }
 
   @override
-  Widget build(BuildContext context) {
-    return _buildScreen(_currentRoute);
-  }
-
-  Widget _buildScreen(String route) {
-    switch (route) {
-      case '/splash':
-        return SplashScreen(
-          onComplete: () {
-            final auth = context.read<AppProvider>();
-            _navigate(auth.isLoggedIn ? '/home' : '/onboarding', replace: true);
-          },
-        );
-      case '/onboarding':
-        return OnboardingScreen(onComplete: () => _navigate('/login', replace: true));
-      case '/login':
-        return LoginScreen(
-          onSignup: () => _navigate('/signup'),
-          onForgotPassword: () => _navigate('/forgot-password'),
-          onOtp: (phone, verId) {
-            _pendingPhone = phone;
-            _pendingVerId = verId;
-            _navigate('/otp');
-          },
-          onSuccess: () => _navigate('/home', replace: true),
-        );
-      case '/forgot-password':
-        return ForgotPasswordScreen(onBack: () => _navigate('/login'));
-      case '/signup':
-        return SignupScreen(
-          onLogin: () => _navigate('/login'),
-          onOtp: (phone, verId) {
-            _pendingPhone = phone;
-            _pendingVerId = verId;
-            _navigate('/otp');
-          },
-        );
-      case '/otp':
-        return OtpScreen(
-          phone: _pendingPhone,
-          verificationId: _pendingVerId,
-          onSuccess: () => _navigate('/home', replace: true),
-        );
-      case '/home':
-        return HomeScreen(onNavigate: _navigate);
-      case '/projects':
-        return ProjectsScreen(onBack: _goBack, onNavigate: _navigate);
-      case '/editor':
-        return EditorScreen(
-          projectId: _routeArgs['projectId'] as String?,
-          onBack: _goBack,
-          onExport: (projectId) => _navigate('/export', args: {'projectId': projectId}),
-        );
-      case '/templates':
-        return TemplatesScreen(onBack: _goBack, onNavigate: _navigate);
-      case '/template-detail':
-        return TemplateDetailScreen(
-          templateId: _routeArgs['templateId'] as String? ?? '1',
-          templateName: _routeArgs['templateName'] as String? ?? 'Wedding Highlights',
-          onBack: _goBack,
-          onNavigate: _navigate,
-        );
-      case '/ai-studio':
-        return AiStudioScreen(onBack: _goBack);
-      case '/export':
-        return ExportScreen(
-          projectId: _routeArgs['projectId'] as String?,
-          onBack: _goBack,
-          onNavigate: _navigate,
-        );
-      case '/settings':
-        return SettingsScreen(onBack: _goBack, onNavigate: _navigate);
-      case '/subscription':
-        return SubscriptionScreen(onBack: _goBack);
-      case '/privacy':
-        return PrivacyScreen(onBack: _goBack, onNavigate: _navigate);
-      case '/delete-account':
-        return DeleteAccountScreen(onBack: _goBack, onNavigate: _navigate);
-      case '/admin':
-        return AdminDashboard(onNavigate: _navigate, onBack: _goBack);
-      case '/admin/users':
-        return AdminUsersScreen(onBack: _goBack);
-      case '/admin/effects':
-        return AdminEffectsScreen(onBack: _goBack);
-      case '/admin/content':
-        return AdminContentScreen(onBack: _goBack);
-      case '/admin/analytics':
-        return AdminAnalyticsScreen(onBack: _goBack);
-      default:
-        return Scaffold(body: Center(child: Text('Route not found: $route', style: const TextStyle(color: Colors.white))));
-    }
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didPop(route, previousRoute);
   }
 }

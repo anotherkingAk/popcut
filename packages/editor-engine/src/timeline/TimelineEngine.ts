@@ -141,4 +141,13 @@ export class TimelineEngine {
   selectClip(clipId: string | null): void {
     this.selectedClipId$.next(clipId)
   }
+
+  destroy(): void {
+    this.project$.complete()
+    this.currentTime$.complete()
+    this.isPlaying$.complete()
+    this.selectedClipId$.complete()
+    this.timeChange$.complete()
+    this.clipChange$.complete()
+  }
 }

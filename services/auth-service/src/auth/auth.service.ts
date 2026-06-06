@@ -21,7 +21,7 @@ export class AuthService {
       data: { email, password: hashedPassword, name },
     })
 
-    return this.generateTokens(user.id, user.email)
+    return this.generateTokens(user.id, user.email, user.role)
   }
 
   async login(email: string, password: string) {
@@ -31,7 +31,7 @@ export class AuthService {
     const valid = await bcrypt.compare(password, user.password)
     if (!valid) throw new UnauthorizedException('Invalid credentials')
 
-    return this.generateTokens(user.id, user.email)
+    return this.generateTokens(user.id, user.email, user.role)
   }
 
   async googleAuth(googleToken: string) {
@@ -43,13 +43,13 @@ export class AuthService {
         data: { email, password: '', name: 'Google User' },
       })
     }
-    return this.generateTokens(user.id, user.email)
+    return this.generateTokens(user.id, user.email, user.role)
   }
 
   async refresh(refreshToken: string) {
     try {
       const payload = this.jwtService.verify(refreshToken)
-      return this.generateTokens(payload.sub, payload.email)
+      return this.generateTokens(payload.sub, payload.email, payload.role)
     } catch {
       throw new UnauthorizedException('Invalid refresh token')
     }
@@ -62,10 +62,10 @@ export class AuthService {
     })
   }
 
-  private generateTokens(userId: string, email: string) {
-    const payload = { sub: userId, email }
+  private generateTokens(userId: string, email: string, role: string) {
+    const payload = { sub: userId, email, role }
     return {
-      accessToken: this.jwtService.sign(payload, { expiresIn: '7d' }),
+      accessToken: this.jwtService.sign(payload, { expiresIn: '15m' }),
       refreshToken: this.jwtService.sign(payload, { expiresIn: '30d' }),
     }
   }

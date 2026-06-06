@@ -16,6 +16,7 @@ class _AiCaptioningWizardState extends State<AiCaptioningWizard> with SingleTick
   String _selectedLanguage = 'English';
   double _progress = 0;
   late AnimationController _progressController;
+  final List<TextEditingController> _captionControllers = [];
 
   final _languages = [
     'English', 'Hindi', 'Tamil', 'Telugu', 'Marathi',
@@ -31,6 +32,7 @@ class _AiCaptioningWizardState extends State<AiCaptioningWizard> with SingleTick
   @override
   void dispose() {
     _progressController.dispose();
+    for (final c in _captionControllers) c.dispose();
     super.dispose();
   }
 
@@ -226,6 +228,12 @@ class _AiCaptioningWizardState extends State<AiCaptioningWizard> with SingleTick
       _Caption(text: 'In just a few taps', time: '0:18 - 0:21'),
     ];
 
+    if (_captionControllers.isEmpty) {
+      for (final c in captions) {
+        _captionControllers.add(TextEditingController(text: c.text));
+      }
+    }
+
     return Column(
       children: [
         Padding(
@@ -264,7 +272,7 @@ class _AiCaptioningWizardState extends State<AiCaptioningWizard> with SingleTick
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         TextField(
-                          controller: TextEditingController(text: captions[i].text),
+                          controller: _captionControllers[i],
                           style: const TextStyle(fontSize: 13, color: AppColors.textHigh),
                           decoration: const InputDecoration(
                             border: InputBorder.none,

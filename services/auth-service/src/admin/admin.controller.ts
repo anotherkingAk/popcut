@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common'
+import { CacheTTL } from '@nestjs/cache-manager'
 import { AuthGuard } from '@nestjs/passport'
 import { RolesGuard } from '../common/guards/roles.guard'
 import { Roles } from '../common/decorators/roles.decorator'
@@ -11,6 +12,7 @@ export class AdminController {
   constructor(private readonly admin: AdminService) {}
 
   // --- Dashboard ---
+  @CacheTTL(60)
   @Get('dashboard')
   getDashboard() {
     return this.admin.getDashboard()
@@ -49,6 +51,7 @@ export class AdminController {
   }
 
   // --- Templates ---
+  @CacheTTL(60)
   @Get('templates')
   listTemplates(@Query('page') page?: number, @Query('limit') limit?: number) {
     return this.admin.listTemplates(page || 1, limit || 20)
@@ -70,6 +73,7 @@ export class AdminController {
   }
 
   // --- Effects ---
+  @CacheTTL(60)
   @Get('effects')
   listEffects(@Query('page') page?: number, @Query('limit') limit?: number) {
     return this.admin.listEffects(page || 1, limit || 20)
@@ -91,6 +95,7 @@ export class AdminController {
   }
 
   // --- Filters ---
+  @CacheTTL(60)
   @Get('filters')
   listFilters(@Query('page') page?: number, @Query('limit') limit?: number) {
     return this.admin.listFilters(page || 1, limit || 20)
@@ -112,6 +117,7 @@ export class AdminController {
   }
 
   // --- Fonts ---
+  @CacheTTL(60)
   @Get('fonts')
   listFonts(@Query('page') page?: number, @Query('limit') limit?: number) {
     return this.admin.listFonts(page || 1, limit || 20)
@@ -133,6 +139,7 @@ export class AdminController {
   }
 
   // --- Audio ---
+  @CacheTTL(60)
   @Get('audio')
   listAudio(@Query('page') page?: number, @Query('limit') limit?: number) {
     return this.admin.listAudio(page || 1, limit || 20)

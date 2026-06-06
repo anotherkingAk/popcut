@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -19,6 +20,26 @@ const navItems = [
   { href: '/ai-studio', label: 'AI Studio', icon: Sparkles },
 ]
 
+const NavItem = React.memo(({ href, icon: Icon, label, isActive }: {
+  href: string
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  isActive: boolean
+}) => (
+  <Link
+    href={href}
+    className={cn(
+      'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors',
+      isActive
+        ? 'bg-primary/10 text-primary'
+        : 'text-text-secondary hover:bg-surface-hover hover:text-text'
+    )}
+  >
+    <Icon className="w-5 h-5 shrink-0" />
+    <span className="hidden lg:block">{label}</span>
+  </Link>
+))
+
 export function Sidebar() {
   const pathname = usePathname()
 
@@ -34,24 +55,15 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 py-4 px-2 space-y-1">
-        {navItems.map((item) => {
-          const isActive = pathname.startsWith(item.href)
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors',
-                isActive
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-text-secondary hover:bg-surface-hover hover:text-text'
-              )}
-            >
-              <item.icon className="w-5 h-5 shrink-0" />
-              <span className="hidden lg:block">{item.label}</span>
-            </Link>
-          )
-        })}
+        {navItems.map((item) => (
+          <NavItem
+            key={item.href}
+            href={item.href}
+            icon={item.icon}
+            label={item.label}
+            isActive={pathname.startsWith(item.href)}
+          />
+        ))}
       </nav>
 
       <div className="p-2 border-t border-border space-y-1">

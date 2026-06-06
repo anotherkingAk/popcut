@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class _AnalyticsEvent {
   final DateTime timestamp;
   final String name;
@@ -30,7 +28,7 @@ class AnalyticsService {
     if (_events.length > _maxEvents) {
       _events.removeAt(0);
     }
-    debugPrint('[Analytics] ${event.timestamp.toIso8601String()} | $name | $properties');
+    // Analytics log suppressed in production
   }
 
   void trackScreen(String screenName) {

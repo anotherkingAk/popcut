@@ -19,36 +19,38 @@ class PreviewCanvas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: AppColors.bgBase,
-      child: Column(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () { HapticService.trigger(HapticLevel.light); onTap(); },
-              onDoubleTap: () { HapticService.trigger(HapticLevel.light); },
-              child: Center(
-                child: AspectRatio(
-                  aspectRatio: 9 / 16,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.bgSurface,
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: AppColors.borderLight, width: 0.5),
+    return RepaintBoundary(
+      child: Container(
+        color: AppColors.bgBase,
+        child: Column(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () { HapticService.trigger(HapticLevel.light); onTap(); },
+                onDoubleTap: () { HapticService.trigger(HapticLevel.light); },
+                child: Center(
+                  child: AspectRatio(
+                    aspectRatio: 9 / 16,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.bgSurface,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: AppColors.borderLight, width: 0.5),
+                      ),
+                      child: _buildCanvasContent(),
                     ),
-                    child: _buildCanvasContent(context),
                   ),
                 ),
               ),
             ),
-          ),
-          _buildControls(),
-        ],
+            _buildControls(),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildCanvasContent(BuildContext context) {
+  Widget _buildCanvasContent() {
     return Stack(
       children: [
         Center(

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Plus, ZoomIn, ZoomOut, AlignJustify, Music, Type,
@@ -26,6 +26,17 @@ export function Timeline() {
   const totalWidth = totalDuration * pixelsPerSecond
 
   const rulerMarks = Array.from({ length: Math.ceil(totalDuration) + 1 }, (_, i) => i)
+
+  const RulerMark = React.memo(({ mark, pps }: { mark: number; pps: number }) => (
+    <div
+      className="absolute top-0 h-full border-l border-border"
+      style={{ left: mark * pps }}
+    >
+      <span className="text-[10px] text-text-muted ml-1">
+        {String(Math.floor(mark / 60)).padStart(2, '0')}:{String(mark % 60).padStart(2, '0')}
+      </span>
+    </div>
+  ))
 
   return (
     <div className="h-72 bg-surface border-t border-border flex flex-col shrink-0">
@@ -83,15 +94,7 @@ export function Timeline() {
             >
               <div className="relative h-7 border-b border-border bg-background">
                 {rulerMarks.map((mark) => (
-                  <div
-                    key={mark}
-                    className="absolute top-0 h-full border-l border-border"
-                    style={{ left: mark * pixelsPerSecond }}
-                  >
-                    <span className="text-[10px] text-text-muted ml-1">
-                      {String(Math.floor(mark / 60)).padStart(2, '0')}:{String(mark % 60).padStart(2, '0')}
-                    </span>
-                  </div>
+                  <RulerMark key={mark} mark={mark} pps={pixelsPerSecond} />
                 ))}
 
                 <div

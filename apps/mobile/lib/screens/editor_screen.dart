@@ -27,8 +27,6 @@ import '../widgets/editor/panels/zoom3d_panel.dart';
 import '../widgets/editor/panels/stickers_grid.dart';
 import '../widgets/editor/panels/overlays_panel.dart';
 import '../widgets/editor/panels/lyrics_panel.dart';
-import '../widgets/editor/panels/voice_clone_panel.dart';
-import '../widgets/editor/panels/text_to_video_panel.dart';
 import '../widgets/editor/panels/voiceover_panel.dart';
 import '../widgets/editor/panels/voice_effects_panel.dart';
 import '../widgets/editor/panels/denoise_panel.dart';
@@ -37,9 +35,6 @@ import '../widgets/editor/panels/freeze_panel.dart';
 import '../widgets/editor/panels/background_panel.dart';
 import '../widgets/editor/panels/canvas_panel.dart';
 import '../widgets/editor/panels/format_panel.dart';
-import '../widgets/editor/panels/animations_panel.dart';
-import '../widgets/editor/panels/keyframe_panel.dart';
-import '../widgets/editor/panels/crop_panel.dart';
 import '../widgets/editor/panels/adjust_panel.dart';
 import '../widgets/editor/ai_captioning_wizard.dart';
 
@@ -64,7 +59,6 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
   late AnimationController _staggerController;
   late Animation<double> _panelSlide;
   bool _hasInitializedProject = false;
-  bool _showPropertiesPanel = false;
 
   @override
   void initState() {
@@ -97,12 +91,12 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
 
   void _openTool(ToolType tool) {
     final editor = context.read<EditorProvider>();
-    final wasClosed = editor.engine.activeTool == null;
-    editor.setActiveTool(tool);
+    final wasClosed = editor.tool.activeTool == null;
+    editor.tool.setActiveTool(tool);
     if (wasClosed) {
       _panelAnimController.forward(from: 0);
       _staggerController.forward(from: 0);
-    } else if (editor.engine.activeTool == null) {
+    } else if (editor.tool.activeTool == null) {
       _panelAnimController.reverse();
     }
   }
@@ -118,22 +112,26 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
     _ensureProjectLoaded();
     final editor = context.read<EditorProvider>();
     final engine = editor.engine;
-    final hasPanelOpen = engine.activeTool != null;
+    final hasPanelOpen = editor.tool.activeTool != null;
 
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
         child: Column(
           children: [
-            Consumer<EditorProvider>(
-              builder: (_, e, __) => ContextualToolbar(
-                selectionState: e.engine.selectionState,
-                selectedClipName: _selectedClipName(e.engine),
-                onBack: widget.onBack,
-                onExport: _onExport,
-                onUndo: () {},
-                onRedo: () {},
-              ),
+            Selector<SelectionNotifier, SelectionState>(
+              selector: (_, s) => s.selectionState,
+              builder: (_, selectionState, __) {
+                final clipName = _selectedClipName(context.read<SelectionNotifier>());
+                return ContextualToolbar(
+                  selectionState: selectionState,
+                  selectedClipName: clipName,
+                  onBack: widget.onBack,
+                  onExport: _onExport,
+                  onUndo: () {},
+                  onRedo: () {},
+                );
+              },
             ),
             Expanded(
               child: Row(
@@ -143,67 +141,82 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
                       children: [
                         Expanded(
                           flex: 4,
-                          child: Consumer<EditorProvider>(
-                            builder: (_, e, __) => _buildPreviewArea(e.engine),
+                          child: Selector<PlaybackNotifier, bool>(
+                            selector: (_, p) => p.isPlaying,
+                            builder: (_, isPlaying, __) {
+                              final selectionState = context.select<SelectionNotifier, SelectionState>((s) => s.selectionState);
+                              return _buildPreviewArea(isPlaying, selectionState, engine);
+                            },
                           ),
                         ),
-                        Consumer<EditorProvider>(
-                          builder: (_, e, __) => SeekBar(
-                            currentPosition: e.engine.currentTime,
-                            totalDuration: e.engine.totalDuration,
-                            onSeek: (v) => e.engine.seek(v),
+                        Selector<PlaybackNotifier, double>(
+                          selector: (_, p) => p.currentTime,
+                          builder: (_, currentTime, __) => SeekBar(
+                            currentPosition: currentTime,
+                            totalDuration: engine.totalDuration,
+                            onSeek: (v) => engine.seek(v),
                           ),
                         ),
                         Expanded(
                           flex: 3,
                           child: hasPanelOpen
                               ? _buildPanelLayout(engine)
-                              : Consumer<EditorProvider>(
-                                  builder: (_, e, __) => TimelineZone(
-                                    tracks: e.engine.tracks,
-                                    totalDuration: e.engine.totalDuration,
-                                    playheadPosition: e.engine.currentTime,
-                                    selectedClipId: e.engine.selectedClipId,
-                                    selectedTrackId: e.engine.selectedTrackId,
-                                    selectionState: e.engine.selectionState,
-                                    onPlayheadChanged: (p) => e.engine.seek(p),
-                                    onClipTap: (clipId, trackId) {
-                                      e.engine.selectClip(clipId, trackId);
-                                      setState(() => _showPropertiesPanel = true);
-                                    },
-                                    onCanvasTap: () {
-                                      e.engine.deselectAll();
-                                      setState(() => _showPropertiesPanel = false);
-                                    },
-                                    onSplit: () => e.engine.splitClip(),
-                                    onDelete: () => e.engine.deleteClip(),
-                                    onAddTrack: (type) => e.engine.addTrack(type),
-                                    onToggleVisibility: (id) => e.engine.toggleTrackVisibility(id),
-                                    onToggleLock: (id) => e.engine.toggleTrackLock(id),
-                                  ),
+                              : Selector<TimelineNotifier, List<TrackModel>>(
+                                  selector: (_, t) => t.tracks,
+                                  builder: (_, tracks, __) {
+                                    final playback = context.read<PlaybackNotifier>();
+                                    final selection = context.read<SelectionNotifier>();
+                                    return TimelineZone(
+                                      tracks: tracks,
+                                      totalDuration: engine.totalDuration,
+                                      playheadPosition: playback.currentTime,
+                                      selectedClipId: selection.selectedClipId,
+                                      selectedTrackId: selection.selectedTrackId,
+                                      selectionState: selection.selectionState,
+                                      onPlayheadChanged: (p) => playback.seek(p),
+                                      onClipTap: (clipId, trackId) {
+                                        selection.selectClip(clipId, trackId);
+                                      },
+                                      onCanvasTap: () {
+                                        selection.deselectAll();
+                                      },
+                                      onSplit: () => engine.splitClip(),
+                                      onDelete: () => engine.deleteClip(),
+                                      onAddTrack: (type) => engine.addTrack(type),
+                                      onToggleVisibility: (id) => engine.toggleTrackVisibility(id),
+                                      onToggleLock: (id) => engine.toggleTrackLock(id),
+                                    );
+                                  },
                                 ),
                         ),
                         if (!hasPanelOpen)
-                          Consumer<EditorProvider>(
-                            builder: (_, e, __) => ToolDock(activeTool: e.engine.activeTool, onToolTap: _openTool),
+                          Selector<ToolNotifier, ToolType?>(
+                            selector: (_, t) => t.activeTool,
+                            builder: (_, activeTool, __) => ToolDock(activeTool: activeTool, onToolTap: _openTool),
                           ),
                       ],
                     ),
                   ),
-                  if (_showPropertiesPanel && engine.selectedClipId != null)
-                    Consumer<EditorProvider>(
-                      builder: (_, e, __) => PropertiesPanel(
-                        clip: _findClip(e.engine),
-                        trackType: _findTrackType(e.engine),
-                        onClose: () => setState(() => _showPropertiesPanel = false),
-                      ),
-                    ),
+                  Selector<SelectionNotifier, String?>(
+                    selector: (_, s) => s.selectedClipId,
+                    builder: (_, selectedClipId, __) {
+                      if (selectedClipId == null) return const SizedBox.shrink();
+                      final selection = context.read<SelectionNotifier>();
+                      final trackType = _findTrackType(selection.selectedTrackId, engine);
+                      return PropertiesPanel(
+                        clip: _findClip(selection.selectedClipId, selection.selectedTrackId, engine),
+                        trackType: trackType,
+                        onClose: () => selection.deselectAll(),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
             if (hasPanelOpen)
-              Consumer<EditorProvider>(
-                builder: (_, e, __) => ToolDock(activeTool: e.engine.activeTool, onToolTap: _openTool),
+              Selector<ToolNotifier, ToolType?>(
+                selector: (_, t) => t.activeTool,
+                builder: (_, activeTool, __) => ToolDock(activeTool: activeTool, onToolTap: _openTool),
               ),
           ],
         ),
@@ -211,29 +224,31 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
     );
   }
 
-  ClipModel? _findClip(EditorEngine engine) {
-    if (engine.selectedClipId == null || engine.selectedTrackId == null) return null;
-    final track = engine.tracks.where((t) => t.id == engine.selectedTrackId).firstOrNull;
-    return track?.clips.where((c) => c.id == engine.selectedClipId).firstOrNull;
+  ClipModel? _findClip(String? clipId, String? trackId, EditorEngine engine) {
+    if (clipId == null || trackId == null) return null;
+    final track = engine.tracks.where((t) => t.id == trackId).firstOrNull;
+    return track?.clips.where((c) => c.id == clipId).firstOrNull;
   }
 
-  TrackType? _findTrackType(EditorEngine engine) {
-    if (engine.selectedTrackId == null) return null;
-    return engine.tracks.where((t) => t.id == engine.selectedTrackId).firstOrNull?.type;
+  TrackType? _findTrackType(String? trackId, EditorEngine engine) {
+    if (trackId == null) return null;
+    return engine.tracks.where((t) => t.id == trackId).firstOrNull?.type;
   }
 
-  String? _selectedClipName(EditorEngine engine) {
-    return _findClip(engine)?.name;
+  String? _selectedClipName(SelectionNotifier selection) {
+    if (selection.selectedClipId == null || selection.selectedTrackId == null) return null;
+    final track = context.read<EditorProvider>().engine.tracks.where((t) => t.id == selection.selectedTrackId).firstOrNull;
+    return track?.clips.where((c) => c.id == selection.selectedClipId).firstOrNull?.name;
   }
 
-  Widget _buildPreviewArea(EditorEngine engine) {
+  Widget _buildPreviewArea(bool isPlaying, SelectionState selectionState, EditorEngine engine) {
     return PreviewCanvas(
-      isPlaying: engine.isPlaying,
+      isPlaying: isPlaying,
       onTap: () {
-        if (engine.selectionState != SelectionState.idle) engine.deselectAll();
+        if (selectionState != SelectionState.idle) engine.deselectAll();
       },
       onTogglePlay: () => engine.togglePlay(),
-      selectionState: engine.selectionState,
+      selectionState: selectionState,
     );
   }
 
@@ -257,7 +272,10 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
         ),
         SizedBox(
           height: 48,
-          child: ToolDock(activeTool: engine.activeTool, onToolTap: _openTool),
+          child: Selector<ToolNotifier, ToolType?>(
+            selector: (_, t) => t.activeTool,
+            builder: (_, activeTool, __) => ToolDock(activeTool: activeTool, onToolTap: _openTool),
+          ),
         ),
       ],
     );

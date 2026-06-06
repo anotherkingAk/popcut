@@ -6,7 +6,7 @@ export class AnalyticsService {
   constructor(private readonly prisma: PrismaClient) {}
 
   private dateFilter(start?: string, end?: string) {
-    const filter: any = {}
+    const filter: Record<string, Date> = {}
     if (start) filter.gte = new Date(start)
     if (end) filter.lte = new Date(end)
     return Object.keys(filter).length ? filter : undefined
@@ -33,42 +33,49 @@ export class AnalyticsService {
   }
 
   async dailyActiveUsers(start?: string, end?: string) {
-    const dateFilter = this.dateFilter(start, end)
-    const where = dateFilter ? { createdAt: dateFilter } : {}
-    const events = await this.prisma.analyticsEvent.groupBy({
-      by: ['createdAt'],
-      where: { ...where, event: 'page_view' },
-      _count: { userId: true },
-      orderBy: { createdAt: 'asc' },
-    })
-    const dau = events.map(e => ({
-      date: e.createdAt.toISOString().split('T')[0],
-      count: e._count.userId,
+    const startDate = start ? new Date(start) : undefined
+    const endDate = end ? new Date(end) : undefined
+    const rows: Array<{ date: Date; count: bigint }> = await this.prisma.$queryRaw`
+      SELECT date_trunc('day', created_at) as date,
+             COUNT(DISTINCT user_id) as count
+      FROM analytics_events
+      WHERE event = 'page_view'
+        AND user_id IS NOT NULL
+        ${startDate ? this.prisma.$queryRaw`AND created_at >= ${startDate}` : this.prisma.$queryRaw``}
+        ${endDate ? this.prisma.$queryRaw`AND created_at <= ${endDate}` : this.prisma.$queryRaw``}
+      GROUP BY date_trunc('day', created_at)
+      ORDER BY date ASC
+    `
+    const dailyActiveUsers = rows.map(r => ({
+      date: r.date.toISOString().split('T')[0],
+      count: Number(r.count),
     }))
-    const unique = await this.prisma.analyticsEvent.groupBy({
-      by: ['userId'],
-      where: { ...where, event: 'page_view', userId: { not: null } },
-    })
-    return { dailyActiveUsers: dau, totalUniqueActive: unique.length }
+    const unique: Array<{ userId: string }> = await this.prisma.$queryRaw`
+      SELECT DISTINCT user_id as "userId"
+      FROM analytics_events
+      WHERE event = 'page_view'
+        AND user_id IS NOT NULL
+        ${startDate ? this.prisma.$queryRaw`AND created_at >= ${startDate}` : this.prisma.$queryRaw``}
+        ${endDate ? this.prisma.$queryRaw`AND created_at <= ${endDate}` : this.prisma.$queryRaw``}
+    `
+    return { dailyActiveUsers, totalUniqueActive: unique.length }
   }
 
   async monthlyActiveUsers(start?: string, end?: string) {
-    const dateFilter = this.dateFilter(start, end)
-    const where = dateFilter ? { createdAt: dateFilter } : {}
-    const events = await this.prisma.analyticsEvent.findMany({
-      where: { ...where, event: 'page_view', userId: { not: null } },
-      select: { userId: true, createdAt: true },
-    })
-    const monthMap = new Map<string, Set<string>>()
-    for (const e of events) {
-      const key = `${e.createdAt.getFullYear()}-${String(e.createdAt.getMonth() + 1).padStart(2, '0')}`
-      if (!monthMap.has(key)) monthMap.set(key, new Set())
-      monthMap.get(key)!.add(e.userId!)
-    }
-    const mau = Array.from(monthMap.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([month, users]) => ({ month, count: users.size }))
-    return { monthlyActiveUsers: mau }
+    const startDate = start ? new Date(start) : undefined
+    const endDate = end ? new Date(end) : undefined
+    const rows: Array<{ month: string; count: bigint }> = await this.prisma.$queryRaw`
+      SELECT to_char(date_trunc('month', created_at), 'YYYY-MM') as month,
+             COUNT(DISTINCT user_id) as count
+      FROM analytics_events
+      WHERE event = 'page_view'
+        AND user_id IS NOT NULL
+        ${startDate ? this.prisma.$queryRaw`AND created_at >= ${startDate}` : this.prisma.$queryRaw``}
+        ${endDate ? this.prisma.$queryRaw`AND created_at <= ${endDate}` : this.prisma.$queryRaw``}
+      GROUP BY date_trunc('month', created_at)
+      ORDER BY month ASC
+    `
+    return { monthlyActiveUsers: rows.map(r => ({ month: String(r.month), count: Number(r.count) })) }
   }
 
   async retention() {
@@ -124,6 +131,10 @@ export class AnalyticsService {
     return this.prisma.template.findMany({
       orderBy: { usageCount: 'desc' },
       take: limit,
+      select: {
+        id: true, name: true, thumbnail: true, category: true,
+        isPublic: true, isPremium: true, price: true, usageCount: true, createdAt: true,
+      },
     })
   }
 
@@ -131,6 +142,10 @@ export class AnalyticsService {
     return this.prisma.effect.findMany({
       orderBy: { createdAt: 'desc' },
       take: limit,
+      select: {
+        id: true, name: true, type: true, thumbnail: true, category: true,
+        isPublic: true, isPremium: true, createdAt: true,
+      },
     })
   }
 

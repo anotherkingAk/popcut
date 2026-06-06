@@ -1,39 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'bootstrap.dart';
+import 'config/routes.dart';
 import 'config/theme.dart';
-import 'services/api_service.dart';
-import 'providers/auth_provider.dart';
-import 'providers/dashboard_provider.dart';
-import 'app.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  runApp(const PopCutAdminApp());
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+  ));
+  final container = await bootstrap();
+  runApp(UncontrolledProviderScope(container: container, child: const PopCutAdminApp()));
 }
 
-class PopCutAdminApp extends StatelessWidget {
+class PopCutAdminApp extends ConsumerWidget {
   const PopCutAdminApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final apiService = ApiService();
-
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider(apiService)),
-        ChangeNotifierProvider(create: (_) => DashboardProvider(apiService)),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
+    return MaterialApp.router(
+      title: 'PopCut Admin',
+      debugShowCheckedModeBanner: false,
+      theme: ref.watch(themeProvider),
+      routerConfig: router,
+      localizationsDelegates: const [
+        DefaultMaterialLocalizations.delegate,
+        DefaultWidgetsLocalizations.delegate,
       ],
-      child: MaterialApp(
-        title: 'PopCut Admin',
-        debugShowCheckedModeBanner: false,
-        theme: AdminTheme.dark,
-        home: const AppRouter(),
-      ),
+      supportedLocales: const [Locale('en', 'US')],
     );
   }
 }

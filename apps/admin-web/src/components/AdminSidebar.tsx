@@ -7,6 +7,7 @@ import {
   LayoutDashboard, Users, Video, Clapperboard, Sparkles,
   Palette, Type, Music, CreditCard, Cpu, Download,
   Flag, Shield, DollarSign, LogOut, ChevronLeft,
+  MessageSquare, ArrowLeftRight, TrendingUp, Bell, Settings,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -15,9 +16,12 @@ const navSections = [
     { href: '/', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/users', label: 'Users', icon: Users },
     { href: '/projects', label: 'Projects', icon: Video },
+    { href: '/support', label: 'Support', icon: MessageSquare },
   ]},
   { label: 'Content', items: [
     { href: '/templates', label: 'Templates', icon: Clapperboard },
+    { href: '/transitions', label: 'Transitions', icon: ArrowLeftRight },
+    { href: '/color-grades', label: 'Color Grades', icon: Palette },
     { href: '/effects', label: 'Effects', icon: Sparkles },
     { href: '/filters', label: 'Filters', icon: Palette },
     { href: '/fonts', label: 'Fonts', icon: Type },
@@ -27,11 +31,18 @@ const navSections = [
     { href: '/subscriptions', label: 'Subscriptions', icon: CreditCard },
     { href: '/credit-transactions', label: 'Credits', icon: DollarSign },
     { href: '/ai-jobs', label: 'AI Jobs', icon: Cpu },
+    { href: '/ai-factory', label: 'AI Factory', icon: Sparkles },
     { href: '/export-jobs', label: 'Exports', icon: Download },
+  ]},
+  { label: 'Business', items: [
+    { href: '/monetization', label: 'Monetization', icon: DollarSign },
+    { href: '/analytics', label: 'Analytics', icon: TrendingUp },
+    { href: '/notifications', label: 'Notifications', icon: Bell },
   ]},
   { label: 'System', items: [
     { href: '/feature-flags', label: 'Feature Flags', icon: Flag },
     { href: '/audit-logs', label: 'Audit Logs', icon: Shield },
+    { href: '/settings', label: 'Settings', icon: Settings },
   ]},
 ]
 

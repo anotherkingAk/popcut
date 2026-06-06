@@ -1,9 +1,16 @@
 import { NestFactory } from '@nestjs/core'
 import { ValidationPipe } from '@nestjs/common'
+import compression from 'compression'
+import type { Request, Response } from 'express'
 import { AppModule } from './app.module'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
+
+  app.use(compression({ filter: (req: Request, res: Response) => {
+    if (req.headers['x-no-compression']) return false
+    return compression.filter(req, res)
+  }}))
 
   app.setGlobalPrefix('api/v1')
   app.enableCors({

@@ -11,7 +11,7 @@ import { JwtStrategy } from './jwt.strategy'
     JwtModule.registerAsync({
       useFactory: () => ({
         secret: process.env.JWT_SECRET || 'popcut-dev-secret-change-in-production',
-        signOptions: { expiresIn: '7d' as any },
+        signOptions: { expiresIn: '7d' as any }, // default; per-token override in service
       }),
     }),
   ],
