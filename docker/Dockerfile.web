@@ -1,4 +1,4 @@
-FROM node:22-alpine AS builder
+FROM node:26-alpine AS builder
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
@@ -12,7 +12,7 @@ RUN pnpm install --frozen-lockfile --filter @popcut/web
 COPY apps/web/ ./apps/web/
 RUN pnpm --filter @popcut/web build
 
-FROM node:22-alpine
+FROM node:26-alpine
 WORKDIR /app
 COPY --from=builder /app/apps/web/out ./out
 COPY --from=builder /app/apps/web/public ./public
