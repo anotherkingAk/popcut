@@ -12,8 +12,8 @@
     "@popcut/api-sdk": "workspace:*",
     "lucide-react": "^0.400.0",
     "next": "^16.0.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
     "recharts": "^2.15.0",
     "tailwind-merge": "^3.0.0",
     "clsx": "^2.1.1",
@@ -22,7 +22,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",
     "@types/node": "^22.0.0",
-    "@types/react": "^19.0.0",
+    "@types/react": "^19.2.17",
     "@types/react-dom": "^19.0.0",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.0"
